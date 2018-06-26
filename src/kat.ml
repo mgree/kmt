@@ -42,6 +42,7 @@ module type KAT_IMPL = sig
   val ppar : Test.t -> Test.t -> Test.t 
   val pseq : Test.t -> Test.t -> Test.t 
   val action : P.t -> Term.t
+  val action_i : int -> P.t -> Term.t
   val pred : Test.t -> Term.t 
   val par : Term.t -> Term.t -> Term.t
   val seq : Term.t -> Term.t -> Term.t
@@ -93,7 +94,7 @@ module KAT(T : THEORY) : (KAT_IMPL with module A = T.A and module P = T.P) = str
 
   and show_term p = 
     match p.node with 
-    | Action (_,p) -> T.P.show p
+    | Action (i,p) -> (T.P.show p) ^ "[" ^ (string_of_int i) ^ "]"
     | Pred a -> show_test a
     | Par(p1,p2) -> "(" ^ (show_term p1) ^ " + " ^ (show_term p2) ^ ")"
     | Seq(p1,p2) -> (show_term p1) ^ ";" ^ (show_term p2)
@@ -139,7 +140,7 @@ module KAT(T : THEORY) : (KAT_IMPL with module A = T.A and module P = T.P) = str
 
   let hash_kat x = 
     match x with 
-    | Action (_,a) -> 2 + T.P.hash a
+    | Action (i,a) -> 2 + 31 * i + (T.P.hash a)
     | Pred a -> 3 + Test.hash a
     | Par(a,b) -> 31 * (b.hkey + (31 * a.hkey + 5))
     | Seq(a,b) -> 31 * (b.hkey + (31 * a.hkey + 7))
@@ -234,11 +235,9 @@ module KAT(T : THEORY) : (KAT_IMPL with module A = T.A and module P = T.P) = str
         then hashcons_pred (PSeq (x,y))
         else hashcons_pred (PSeq (y,x))
 
-  let gen_label = 
-    let x = ref 0 in 
-    fun () -> x:=!x+1; !x
+  let action x = hashcons_kat (Action (1, x))
+  let action_i i x = hashcons_kat (Action (i, x))
 
-  let action x = hashcons_kat (Action (gen_label(), x))
   let pred x = hashcons_kat (Pred x)
 
   let rec par x y =

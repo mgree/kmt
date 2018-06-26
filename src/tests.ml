@@ -1,10 +1,9 @@
 open Kat
-open Ltlf
-open Increment
+open Addition
 open Automata
 
 module T = ANSITerminal
-module K = Increment.K
+module K = Addition.K
 module A = Automata(K)
 
 exception Violation of string * string
@@ -67,38 +66,38 @@ module Unit = struct
 
   let test1 () = 
     assert_equivalent 
-      "inc(x)*; x > 2"  
-      "inc(x)*; x > 2"
+      "inc(x,1)*; x > 2"  
+      "inc(x,1)*; x > 2"
 
   let test2 () = 
     assert_equivalent 
-      "inc(x);inc(x)*; x > 2"
-      "x>1;inc(x) + inc(x);inc(x);inc(x)*; x > 2"
+      "inc(x,1);inc(x,1)*; x > 2"
+      "x>1;inc(x,1) + inc(x,1);inc(x,1);inc(x,1)*; x > 2"
 
   let test3 () = 
     assert_equivalent 
-      "inc(x)*; x > 2"  
-      "x>2 + inc(x);inc(x)*; x > 2"
+      "inc(x,1)*; x > 2"  
+      "x>2 + inc(x,1);inc(x,1)*; x > 2"
 
   let test4 () = 
     assert_equivalent 
-      "inc(x); inc(x); inc(x); x > 2"  
-      "inc(x); inc(x); inc(x); x > 1"
+      "inc(x,1); inc(x,1); inc(x,1); x > 2"  
+      "inc(x,1); inc(x,1); inc(x,1); x > 1"
 
   let test5 () = 
     assert_not_equivalent 
-      "inc(x); inc(x); inc(x); x > 2"  
-      "inc(x); inc(x); inc(x); x > 3"
+      "inc(x,1); inc(x,1); inc(x,1); x > 2"  
+      "inc(x,1); inc(x,1); inc(x,1); x > 3"
    
   let test6 () = 
     assert_equivalent 
-      "inc(x);inc(y); x > 0; y > 0"
-      "inc(x);inc(y); y > 0; x > 0"
+      "inc(x,1);inc(y,1); x > 0; y > 0"
+      "inc(x,1);inc(y,1); y > 0; x > 0"
 
   let test7 () = 
     assert_not_equivalent 
-      "inc(x);inc(x)*; x > 2"
-      "x>2;inc(x) + inc(x);inc(x);inc(x)*; x > 2"
+      "inc(x,1);inc(x,1)*; x > 2"
+      "x>2;inc(x,1) + inc(x,1);inc(x,1);inc(x,1)*; x > 2"
 
   let test8 () = 
     assert_equivalent 
@@ -112,25 +111,25 @@ module Unit = struct
 
   let test10 () = 
     assert_equivalent
-      "inc(x) + inc(x)"
-      "inc(x)"
+      "inc(x,1) + inc(x,1)"
+      "inc(x,1)"
 
   let test11 () = 
     assert_equivalent
-      "(inc(x);x>1)*"
-      "true + x>0;inc(x);inc(x)*"
+      "(inc(x,1);x>1)*"
+      "true + x>0;inc(x,1);inc(x,1)*"
 
   let test12 () = 
     assert_not_equivalent
-      "(inc(x);x>1)*"
-      "true + inc(x);inc(x)*"
+      "(inc(x,1);x>1)*"
+      "true + inc(x,1);inc(x,1)*"
 
   let tests = 
     ["Idempotency1" >:: test0;
      "Idempotency2" >:: test1;
      "Unrolling1" >:: test2;
      "Unrolling2" >:: test3;
-     "Postcondition1" >:: test4;
+     "Postcondition1" >:: test4; 
      "Postcondition2" >:: test5;
      "Commutativity" >:: test6;
      "Initial Conditions" >:: test7;

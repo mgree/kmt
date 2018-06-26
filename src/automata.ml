@@ -518,16 +518,56 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
       NatSetAutomata.create initial trans accept
   end
 
+  let add_labels (term : K.Term.t) : K.Term.t = 
+    let curr = ref 2 in
+    let rec aux t = 
+      match t.node with 
+      | Action(_,p) -> 
+          let ret = K.action_i !curr p in 
+          incr curr;
+          ret
+      | Pred _ -> t
+      | Par(x,y) -> 
+          let l = aux x in 
+          let r = aux y in 
+          K.par l r
+      | Seq(x,y) ->
+          let l = aux x in 
+          let r = aux y in 
+          K.seq l r
+      | Star x -> K.star (aux x)
+    in 
+    aux term
+
+  let remove_labels (term : K.Term.t) : K.Term.t = 
+    let rec aux t = 
+      match t.node with 
+      | Action(_,p) -> K.action p
+      | Pred _ -> t
+      | Par(x,y) -> 
+          let l = aux x in 
+          let r = aux y in 
+          K.par l r
+      | Seq(x,y) ->
+          let l = aux x in 
+          let r = aux y in 
+          K.seq l r
+      | Star x -> K.star (aux x)
+    in 
+    aux term
+
   let of_term (term : K.Term.t) : t =
+    let term = add_labels term in 
     let (term, placeholder_map) = replace_theory_term term in 
-    let chars = characters term in
-    let amap = action_map term in
     let add (_,l,k) cmap = NatTermMap.add l k cmap in
     let partials =
       let x = (derivative term) in
       let y = DerivativeSet.fold add x (NatTermMap.empty()) in
       add (K.zero(),1,term) y 
     in
+    (* let term = remove_labels term in *)
+    let chars = characters term in
+    let amap = action_map term in
     (* NatTermMap.iter (fun l deriv -> 
       Printf.printf "Partial: %d --> %s\n" l (K.Term.show deriv)
     ) partials; *)
@@ -541,10 +581,11 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
       else
         let cont = NatTermMap.find l partials in
         let dkl = derivative cont in
-        (* Printf.printf "Derivative for %d is %s\n" l (DerivativeSet.show dkl); *)
+        (* Printf.printf "Continuation for %d is %s\n" l (K.Term.show cont);
+        Printf.printf "Derivative for %d is %s\n" l (DerivativeSet.show dkl); *)
         let transitions ((d,l,k):DerivativeSet.elt) acc = 
           let action = NatActionMap.find l amap in
-          (* Printf.printf "Adding action: %s,%s\n" (K.Test.show d) (K.P.show action); *)
+          (* Printf.printf "  Adding action: (%s,%s)\n" (K.Test.show d) (K.P.show action); *)
           if d = K.zero() then acc 
           else 
             let key = (d, Some action) in 
