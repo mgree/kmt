@@ -539,23 +539,6 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
     in 
     aux term
 
-  let remove_labels (term : K.Term.t) : K.Term.t = 
-    let rec aux t = 
-      match t.node with 
-      | Action(_,p) -> K.action p
-      | Pred _ -> t
-      | Par(x,y) -> 
-          let l = aux x in 
-          let r = aux y in 
-          K.par l r
-      | Seq(x,y) ->
-          let l = aux x in 
-          let r = aux y in 
-          K.seq l r
-      | Star x -> K.star (aux x)
-    in 
-    aux term
-
   let of_term (term : K.Term.t) : t =
     let term = add_labels term in 
     let (term, placeholder_map) = replace_theory_term term in 
