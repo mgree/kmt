@@ -2,7 +2,7 @@ open Syntax
 open Common
 open Hashcons
 
-let merge = true
+let merge = false
 
 type 'a pred = 'a pred_hons hash_consed
 and 'a pred_hons =

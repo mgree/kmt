@@ -1,1 +1,1 @@
-true: package(ppx_deriving.std), package(batteries), package(ANSITerminal)
+true: package(ppx_deriving.std), package(batteries), package(ANSITerminal), package(z3)
