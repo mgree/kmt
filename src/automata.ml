@@ -121,8 +121,7 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
 
   let rec observation_test (test : K.Test.t) = 
     match test.node with 
-    | Not _ -> failwith "Impossible: [(Not _) case in observation]"
-    | Theory _ | Zero | One | Placeholder _ -> test
+    | Theory _ | Zero | One | Placeholder _ | Not _ -> test
     | PPar (a,b) -> K.ppar (observation_test a) (observation_test b)
     | PSeq (a,b) -> K.pseq (observation_test a) (observation_test b)
 

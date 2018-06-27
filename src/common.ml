@@ -134,6 +134,12 @@ let rec repeat n str =
   | 1 -> str 
   | _ -> str ^ (repeat (n-1) str) 
 
+let time f x =
+  let t = Sys.time() in
+  let fx = f x in
+  let time = (Sys.time() -. t) in 
+  (fx, time)
+
 let add_sep sep acc = 
   if acc = "" then acc else sep ^ acc
 

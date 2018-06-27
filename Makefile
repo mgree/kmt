@@ -7,6 +7,10 @@ test: src/tests.ml
 	ocamlbuild -use-ocamlfind -r src/tests.native
 	./tests.native
 
+eval: src/eval.ml
+	ocamlbuild -use-ocamlfind -r src/eval.native
+	./eval.native
+
 clean:
 	ocamlbuild -clean
 	rm -f bin/*.native
