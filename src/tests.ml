@@ -197,7 +197,6 @@ module Unit = struct
     TP.assert_not_equivalent 
       "a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1))"
       "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)"
-
   
   let tests = 
     ["Idempotency1" >:: test0;

@@ -9,11 +9,9 @@ open Hashcons
 module CompleteTheoryAux
     (T : THEORY)
     (M : SafeMap.S with type key = string and type value = T.P.t) :
-  THEORY with type A.t = T.A.t and type P.t = M.t =
-struct
-  module rec Implementation :
-    THEORY with type A.t = T.A.t and type P.t = M.t =
-  struct
+  THEORY with type A.t = T.A.t and type P.t = M.t = struct
+  
+  module rec Implementation : THEORY with type A.t = T.A.t and type P.t = M.t = struct
     module K = KAT (Implementation)
     module Test = K.Test
     module Term = K.Term
@@ -45,7 +43,13 @@ struct
 
     let satisfiable x = failwith ""
 
+    let theory_to_z3_expr a ctx map = failwith ""
+  
+    let create_z3_var str ctx solver = failwith ""
+
     let variable x = ""
+
+    let variable_test x = ""
 
     let unbounded () = T.unbounded ()
 

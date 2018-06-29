@@ -26,71 +26,44 @@ and ('a, 'p) kat_hons =
 
 module type KAT_IMPL = sig
   module A : CollectionType
-
   module P : CollectionType
-
   module Test : CollectionType with type t = A.t pred
-
   module Term : CollectionType with type t = (A.t, P.t) kat
 
   (* Theory functions *)
-
   val push_back : P.t -> A.t -> Test.t BatSet.PSet.t
-
   val push_back_test : P.t -> Test.t -> Test.t BatSet.PSet.t
-
   val satisfiable : Test.t -> bool
-
+  val z3_satisfiable : Test.t -> bool
   val unbounded : unit -> bool
-
   val implies : Test.t -> Test.t -> bool
 
   (* Smart constructors *)
-
   val placeholder : int -> Test.t
-
   val theory : A.t -> Test.t
-
   val zero : unit -> Test.t
-
   val one : unit -> Test.t
-
   val not : Test.t -> Test.t
-
   val ppar : Test.t -> Test.t -> Test.t
-
   val pseq : Test.t -> Test.t -> Test.t
-
   val action : P.t -> Term.t
-
   val action_i : int -> P.t -> Term.t
-
   val pred : Test.t -> Term.t
-
   val par : Term.t -> Term.t -> Term.t
-
   val seq : Term.t -> Term.t -> Term.t
-
   val star : Term.t -> Term.t
 
   (* Utility functions *)
-
   val subterms : Test.t -> Test.t BatSet.PSet.t
-
   val test_of_expr : Syntax.expr -> Test.t
-
   val term_of_expr : Syntax.expr -> Term.t
-
   val parse : string -> Term.t
 end
 
 module type THEORY = sig
   module A : CollectionType
-
   module P : CollectionType
-
   module Test : CollectionType with type t = A.t pred
-
   module Term : CollectionType with type t = (A.t, P.t) kat
 
   module K :
@@ -101,40 +74,30 @@ module type THEORY = sig
      and module Term = Term
 
   val parse : string -> expr list -> (A.t, P.t) either
-
   val push_back : P.t -> A.t -> Test.t BatSet.PSet.t
-
   val subterms : A.t -> Test.t BatSet.PSet.t
-
   val simplify_not : A.t -> Test.t option
-
   val simplify_and : A.t -> A.t -> Test.t option
-
   val simplify_or : A.t -> A.t -> Test.t option
-
   val merge : P.t -> P.t -> P.t
-
   val reduce : A.t -> P.t -> P.t option
-
   val variable : P.t -> string
-
+  val variable_test : A.t -> string
   val unbounded : unit -> bool
-
   val satisfiable : Test.t -> bool
+  val create_z3_var: string * A.t -> Z3.context -> Z3.Solver.solver -> Z3.Expr.expr
+  val theory_to_z3_expr: A.t -> Z3.context -> Z3.Expr.expr StrMap.t -> Z3.Expr.expr
 end
 
-module KAT (T : THEORY) :
-  KAT_IMPL with module A = T.A and module P = T.P =
-struct
+module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = struct
   type test = T.A.t pred
-
   type term = (T.A.t, T.P.t) kat
 
   module A = T.A
   module P = T.P
 
   let rec show_test a = show_test_hons a.node
-
+ 
   and show_test_hons a =
     match a with
     | Placeholder i -> "placeholder(" ^ string_of_int i ^ ")"
@@ -182,13 +145,9 @@ struct
 
   module Test : CollectionType with type t = T.A.t pred = struct
     type t = T.A.t pred
-
     let equal x y = x.tag = y.tag
-
     let compare x y = x.tag - y.tag
-
     let hash x = x.hkey
-
     let show = show_test
   end
 
@@ -213,13 +172,9 @@ struct
 
   module Term : CollectionType with type t = (T.A.t, T.P.t) kat = struct
     type t = (T.A.t, T.P.t) kat
-
     let equal x y = x.tag = y.tag
-
     let compare x y = x.tag - y.tag
-
     let hash x = x.hkey
-
     let show = show_term
   end
 
@@ -400,8 +355,49 @@ struct
         Common.cross_product x y base pseq
     | Not _ | Placeholder _ -> failwith "Invalid term in pushback"
 
-
   let satisfiable x = T.satisfiable x
+
+  open Z3
+
+  let rec all_variables (a: Test.t) : T.A.t StrMap.t =
+    match a.node with
+    | One | Zero | Placeholder _ -> StrMap.empty
+    | Not b -> all_variables b
+    | PPar (b, c) | PSeq (b, c) ->
+        StrMap.union (fun k v1 v2 -> Some v1) (all_variables b) (all_variables c)
+    | Theory x -> StrMap.singleton (T.variable_test x) x
+
+  let z3_satisfiable (a: Test.t) =
+    let rec sat_aux (a: Test.t) ctx map =
+      match a.node with
+      | One -> Z3.Boolean.mk_true ctx
+      | Zero -> Z3.Boolean.mk_false ctx
+      | Not b -> Z3.Boolean.mk_not ctx (sat_aux b ctx map)
+      | PPar (b, c) -> Z3.Boolean.mk_or ctx [sat_aux b ctx map; sat_aux c ctx map]
+      | PSeq (b, c) -> Z3.Boolean.mk_and ctx [sat_aux b ctx map; sat_aux c ctx map]
+      | Placeholder _ -> failwith "sat: unreachable"
+      | Theory x -> T.theory_to_z3_expr x ctx map
+    in
+    (* grab all the referenced variables *)
+    let vars = all_variables a in
+    (* Create the solver *)
+    let cfg = [("model", "false"); ("proof", "false")] in
+    let ctx = mk_context cfg in
+    let solver = Solver.mk_solver ctx None in
+    (* create variables from each referenced variable *)
+    let map =
+      StrMap.fold
+        (fun str a acc ->
+          let xc = T.create_z3_var (str,a) ctx solver in
+          StrMap.add str xc acc )
+        vars StrMap.empty
+    in
+    (* recrusively generate the formula and assert it *)
+    let formula = sat_aux a ctx map in
+    Solver.add solver [formula] ;
+    let status = Solver.check solver [] in
+    Solver.reset solver ;
+    status = Solver.SATISFIABLE
 
   let unbounded () = T.unbounded ()
 

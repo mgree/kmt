@@ -146,6 +146,11 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | Left x -> T1.variable x 
       | Right y -> T2.variable y
 
+    let variable_test a = 
+      match a with 
+      | Left x -> T1.variable_test x 
+      | Right y -> T2.variable_test y
+
     let unbounded () = T1.unbounded() || T2.unbounded()
   
     let rec only_left (a : K.Test.t) : bool = 
@@ -157,22 +162,28 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | Placeholder i -> failwith "impossible"
 
     let rec only_right (a : K.Test.t) : bool = 
-      match a.node with 
+      match a.node with  
       | Zero | One | Theory (Right _) -> true
       | Theory (Left _) -> false 
       | Not x -> only_right x
       | PPar(x,y) | PSeq(x,y) -> (only_right x && only_right y)
       | Placeholder i -> failwith "impossible"
 
+    let theory_to_z3_expr (a : A.t) (ctx : Z3.context) (map : Z3.Expr.expr StrMap.t) = 
+      match a with 
+      | Left x -> T1.theory_to_z3_expr x ctx map 
+      | Right y -> T2.theory_to_z3_expr y ctx map
+  
+    let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
+      match a with 
+      | Left x -> T1.create_z3_var (str,x) ctx solver 
+      | Right y -> T2.create_z3_var (str,y) ctx solver
+
     let satisfiable (a: K.Test.t) = 
       if only_left a then T1.satisfiable (to_test_left a (fun _ -> failwith ""))
       else if only_right a then T2.satisfiable (to_test_right a (fun _ -> failwith ""))
-      else failwith "unimplemented"
-        (* total hack. does not work in general
-        let x = to_test_left a (fun a -> T1.K.one()) in 
-        let y = to_test_right a (fun a -> T2.K.one()) in 
-        T1.satisfiable x && T2.satisfiable y *)
-    
+      else K.z3_satisfiable a
+      
   end  
 
   include Implementation

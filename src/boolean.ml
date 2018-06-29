@@ -34,31 +34,25 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
 
   module P : CollectionType with type t = p = struct
     type t = p
-
     let compare = compare
-
     let hash = Hashtbl.hash
-
     let equal = equal_p
-
     let show (Assign (x, i)) = x ^ "+=" ^ string_of_bool i
   end
 
   module A : CollectionType with type t = a = struct
     type t = a
-
     let compare = compare_a
-
     let hash = Hashtbl.hash
-
     let equal = equal_a
-
     let show = function Bool (x, v) -> x ^ "=" ^ string_of_bool v
   end
 
   let variable = get_name_p
 
-  let get_bool s =
+  let variable_test = get_name_a
+
+  let get_bool s = 
     match s with
     | "T" -> true
     | "F" -> false
@@ -112,45 +106,16 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
         StrSet.union (all_variables b) (all_variables c)
     | Theory Bool (x, _) -> StrSet.singleton x
 
+  let theory_to_z3_expr (a : A.t) (ctx : Z3.context) (map : Z3.Expr.expr StrMap.t) = 
+    match a with Bool (x, v) ->
+    let var = StrMap.find x map in
+    let value = Z3.Boolean.mk_val ctx v in
+    Z3.Boolean.mk_eq ctx var value
 
-  let sat (a: K.Test.t) =
-    let rec sat_aux (a: K.Test.t) ctx map =
-      match a.node with
-      | One -> Boolean.mk_true ctx
-      | Zero -> Boolean.mk_false ctx
-      | Not b -> Boolean.mk_not ctx (sat_aux b ctx map)
-      | PPar (b, c) -> Boolean.mk_or ctx [sat_aux b ctx map; sat_aux c ctx map]
-      | PSeq (b, c) -> Boolean.mk_and ctx [sat_aux b ctx map; sat_aux c ctx map]
-      | Placeholder _ -> failwith "sat: unreachable"
-      | Theory x ->
-        match x with Bool (x, v) ->
-          let var = StrMap.find x map in
-          let value = Z3.Boolean.mk_val ctx v in
-          Z3.Boolean.mk_eq ctx var value
-    in
-    (* grab all the referenced variables *)
-    let vars = all_variables a in
-    (* Create the solver *)
-    let cfg = [("model", "false"); ("proof", "false")] in
-    let ctx = mk_context cfg in
-    let solver = Solver.mk_solver ctx None in
-    (* create variables from each referenced variable *)
-    let map =
-      StrSet.fold
-        (fun str acc ->
-          let sym = Symbol.mk_string ctx str in
-          let bool_sort = Z3.Boolean.mk_sort ctx in
-          let xc = Expr.mk_const ctx sym bool_sort in
-          StrMap.add str xc acc )
-        vars StrMap.empty
-    in
-    (* recrusively generate the formula and assert it *)
-    let formula = sat_aux a ctx map in
-    Solver.add solver [formula] ;
-    let status = Solver.check solver [] in
-    Solver.reset solver ;
-    status = Solver.SATISFIABLE
-
+  let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr =
+    let sym = Symbol.mk_string ctx str in
+    let bool_sort = Z3.Boolean.mk_sort ctx in
+    Expr.mk_const ctx sym bool_sort 
 
   module H = Hashtbl.Make (K.Test)
 
@@ -164,14 +129,13 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     | Not {node= Theory _} -> true
     | Not _ -> false
 
-
   let satisfiable (a: K.Test.t) =
     try H.find tbl a with _ ->
       (* Printf.printf "Checking Sat %s\n" (K.Test.show a); *)
       debug (fun () -> Printf.printf "SAT: %s" (K.Test.show a)) ;
       if not (can_use_fast_solver a) then (
         debug (fun () -> Printf.printf " SLOW\n") ;
-        let ret = sat a in
+        let ret = K.z3_satisfiable a in
         H.add tbl a ret ; ret )
       else (
         debug (fun () -> Printf.printf " FAST\n") ;

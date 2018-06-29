@@ -96,7 +96,13 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
 
   let variable x = get_field x
 
+  let variable_test x = get_field x
+
   let satisfiable x = failwith ""
+
+  let theory_to_z3_expr a ctx map = failwith ""
+  
+  let create_z3_var str ctx solver = failwith ""
 
   let simplify_and x y = 
     match x,y with 
