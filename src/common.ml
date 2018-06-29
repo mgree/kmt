@@ -6,13 +6,9 @@
 
 module type CollectionType = sig
   type t
-
   val equal : t -> t -> bool
-
   val compare : t -> t -> int
-
   val hash : t -> int
-
   val show : t -> string
 end
 
@@ -37,11 +33,8 @@ module Option = struct
       | None, Some _ -> -1
       | Some _, None -> 1
 
-
     let equal x y = compare x y = 0
-
     let hash = function None -> 1 | Some x -> 2 + X.hash x
-
     let show = function
       | None -> "None"
       | Some x -> Printf.sprintf "Some(%s)" (X.show x)
@@ -69,11 +62,8 @@ module Either = struct
       | Left _, Right _ -> -1
       | Right _, Left _ -> 1
 
-
     let equal x y = compare x y = 0
-
     let hash = function Left x -> 5 + X.hash x | Right y -> 7 + Y.hash y
-
     let show = function
       | Left x -> "Left(" ^ X.show x ^ ")"
       | Right y -> "Right(" ^ Y.show y ^ ")"
@@ -86,21 +76,15 @@ module Pair = struct
   (* Creating collection types of pairs *)
   module Make (X : CollectionType) (Y : CollectionType) = struct
     type t = X.t * Y.t
-
     let compare (a, b) (c, d) =
       let cmp = X.compare a c in
       if cmp <> 0 then cmp else Y.compare b d
-
-
     let equal x y = compare x y = 0
-
     let hash (a, b) = 31 * X.hash a + Y.hash b
-
     let show (a, b) = Printf.sprintf "(%s,%s)" (X.show a) (Y.show b)
   end
 
   let map_fst f (a, b) = (f a, b)
-
   let map_snd f (a, b) = (a, f b)
 end
 
@@ -182,79 +166,55 @@ let _hash x acc = acc lsr 5 - 1 + x
 
 module IntType = struct
   type t = int
-
   let equal i j = i = j
-
   let compare (i: int) j = if i < j then -1 else if i > j then 1 else 0
-
   let hash i = i land max_int
-
   let show = string_of_int
 end
 
 module IntType2 = struct
   type t = int * int
-
   let equal x y = compare x y = 0
-
   let compare (a, b) (c, d) =
     let cmp = IntType.compare a c in
     if cmp = 0 then IntType.compare b d else cmp
-
-
   let hash (i, j) = i land max_int + j land max_int
-
   let show (i, j) = "(" ^ string_of_int i ^ "," ^ string_of_int j ^ ")"
 end
 
 module NatType = struct
   type t = int
-
   let compare i j = i - j
-
   let equal i j = i = j
-
   let hash i = i land max_int
-
   let show = string_of_int
 end
 
 module NatType2 = struct
   type t = int * int
-
   let equal x y = compare x y = 0
-
   let compare (a, b) (c, d) =
     let cmp = a - c in
     if cmp = 0 then b - d else cmp
-
-
   let hash (i, j) = (i + j) land max_int
-
   let show (i, j) = "(" ^ string_of_int i ^ "," ^ string_of_int j ^ ")"
 end
 
 module StrType = struct
   type t = string
-
   let compare = String.compare
-
   let equal i j = String.compare i j = 0
-
   let hash s =
     let h = ref 0 in
     for i = 0 to String.length s - 1 do h := !h lsr 5 - 1 + Char.code s.[i]
     done ;
     !h
-
-
   let show x = x
 end
 
 module NatSet = struct
   module S = Set.Make (NatType)
   include S
-
   let hash x = S.fold (fun y acc -> _hash y acc) x 0
 end
 

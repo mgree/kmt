@@ -82,7 +82,8 @@ module rec Addition : THEORY with type A.t = a and type P.t = p = struct
 
   let rec subterms x =
     match x with
-    | Lt (_, 0) | Gt (_, 0) -> PSet.singleton ~cmp:K.Test.compare (K.theory x)
+    | Lt (_, 0) -> PSet.create K.Test.compare
+    | Gt (_, 0) -> PSet.singleton ~cmp:K.Test.compare (K.theory x)
     | Lt (v, i) -> PSet.add (K.theory x) (subterms (Lt (v, i - 1)))
     | Gt (v, i) -> PSet.add (K.theory x) (subterms (Gt (v, i - 1)))
 

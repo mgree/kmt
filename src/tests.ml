@@ -193,12 +193,22 @@ module Unit = struct
       "set(x,T); inc(y,1)"
       "inc(y,1); set(x,T)"
 
+  (* let test25 () = 
+    TP.assert_equivalent 
+      "y<1; (a=F + a=T; inc(y,1)); (b=F + b=T; inc(y,1)); (c=F + c=T; inc(y,1)); y>2"
+      "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" *)
+
   let test25 () = 
+    TP.assert_equivalent 
+      "y<1; (a=F + a=T; inc(y,1)); y > 0"
+      "a=T; inc(y,1)"
+
+  let test26 () = 
     TP.assert_not_equivalent 
-      "a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1))"
-      "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)"
+      "y<1; (a=F + a=T; inc(y,1))"
+      "a=T; inc(y,1)"
   
-  let tests = 
+  let tests =
     ["Idempotency1" >:: test0;
      "Idempotency2" >:: test1;
      "Unrolling1" >:: test2;
@@ -224,7 +234,8 @@ module Unit = struct
      "Boolean-tree-ordering" >:: test22;
      "Product-parsing" >:: test23;
      "Product-action-ordering" >:: test24;
-     "Product-population-count" >:: test25]
+     "Product-population-count" >:: test25;
+     "Product-population-count2" >:: test26]
 
 end;;
 

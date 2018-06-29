@@ -535,18 +535,18 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     let rec refine (t: minterm_tree) (a: K.Test.t) (l: StateSet.t) =
       match t with
       | Node (b, ls, left, right) ->
+          let ls' = StateSet.union l ls in
           let pos = K.pseq a b in
           let neg = K.pseq (K.not a) b in
           let sat_pos = K.satisfiable pos in
           if sat_pos && K.satisfiable neg then
             if left = Leaf then
-              let ls' = StateSet.union l ls in
-              Node
-                (b, ls, Node (pos, ls', Leaf, Leaf), Node (neg, ls, Leaf, Leaf))
+              Node (b, ls, Node (pos, ls', Leaf, Leaf), Node (neg, ls, Leaf, Leaf))
             else Node (b, ls, refine left a l, refine right a l)
+          else if sat_pos then Node (b, ls', refine left a l, right)
+          else if K.satisfiable neg then Node (b, ls, left, refine right a l)
           else t
-      | Leaf -> failwith "impossible: refine"
-
+      | Leaf -> Leaf
 
     let rec leaves (t: minterm_tree) : (K.Test.t * StateSet.t) list =
       match t with
@@ -572,9 +572,16 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
           (* ensure predicates are disjoint by constructing minterms *)
           let t = transition auto 0 in
           let true_states = Transitions.find (K.one (), None) t in
+          (* Printf.printf "  True states: %s\n" (StateSet.show true_states); *)
           let root = Node (K.one (), true_states, Leaf, Leaf) in
           let tree =
-            Transitions.fold (fun (a, _) ls acc -> refine acc a ls) t root
+            Transitions.fold (fun (a, _) ls acc -> 
+              (* Printf.printf "  Leaves currently:\n";
+              List.iter (fun (a,ls) -> Printf.printf "   LEAF: %s, states=%s\n" 
+              (K.Test.show a) (StateSet.show ls)) (leaves acc);
+              Printf.printf "  mintree add %s\n" (K.Test.show a); *)
+              refine acc a ls
+            ) t root
           in
           let vs = leaves tree in
           let ret =
@@ -681,8 +688,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     let auto = create 0 trans accept in
     debug (fun () -> Printf.printf "Action Map: %s\n" (NatActionMap.show amap)) ;
     debug (fun () -> Printf.printf "Replaced: %s\n" (K.Term.show term)) ;
-    debug (fun () ->
-        Printf.printf "Map: %s\n" (TestNatMap.show placeholder_map) ) ;
+    debug (fun () -> Printf.printf "Map: %s\n" (TestNatMap.show placeholder_map) ) ;
     debug (fun () -> Printf.printf "Characters: %s\n" (ActionSet.show chars)) ;
     debug (fun () -> Printf.printf "Policy Automata:\n") ;
     debug (fun () -> print auto) ;
@@ -700,6 +706,8 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
           debug (fun () -> Printf.printf "Current intersected Automaton:\n") ;
           debug (fun () -> PairAutomata.print ret) ;
           let ret = RP.reindex ret in
+          debug (fun () -> Printf.printf "Intersected reindexed Automaton:\n") ;
+          debug (fun () -> print ret) ;
           ret )
         placeholder_map auto
     in

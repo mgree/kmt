@@ -6,10 +6,11 @@ open Automata
 module T = ANSITerminal
 module KA = Addition.K
 module KB = Boolean.K
-module Prod = Product (Addition) (Boolean)
+module Prod = Product(Addition)(Boolean)
 module KP = Prod.K
-module AA = Automata (KA)
-module AB = Automata (KB)
+module AA = Automata(KA)
+module AB = Automata(KB)
+module AP = Automata(KP)
 
 let variables = ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"]
 
@@ -82,7 +83,7 @@ let test_count_order () =
   let auto1 = AA.of_term term1 in
   let auto2 = AA.of_term term2 in
   let eq = AA.equivalent auto1 auto2 in
-  assert eq ;
+  assert eq;
   ()
 
 
@@ -100,7 +101,7 @@ let test_parity_loop () =
   let auto1 = AB.of_term term1 in
   let auto2 = AB.of_term term2 in
   let eq = AB.equivalent auto1 auto2 in
-  assert eq ;
+  assert eq;
   ()
 
 
@@ -118,7 +119,16 @@ let test_boolean_formula () =
   let auto1 = AB.of_term term1 in
   let auto2 = AB.of_term term2 in
   let eq = AB.equivalent auto1 auto2 in
-  assert eq ;
+  assert eq;
+  ()
+
+let test_population_count () = 
+  let term1 = KP.parse "y<0; a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>2" in 
+  let term2 = KP.parse "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" in 
+  let auto1 = AP.of_term term1 in 
+  let auto2 = AP.of_term term2 in 
+  let eq = AP.equivalent auto1 auto2 in 
+  assert eq; 
   ()
 
 
@@ -131,9 +141,11 @@ let main =
   let _, t4 = Common.time test_count_order () in
   let _, t5 = Common.time test_parity_loop () in
   let _, t6 = Common.time test_boolean_formula () in
+  let _, t7 = Common.time test_population_count () in 
   Printf.printf "a* != a (10)      [time: %f]\n" t1 ;
   (* Printf.printf "a* != a (100)     [time: %f]\n" t2; *)
   Printf.printf "count twice       [time: %f]\n" t3 ;
   Printf.printf "count order       [time: %f]\n" t4 ;
   Printf.printf "parity loop       [time: %f]\n" t5 ;
-  Printf.printf "boolean tree      [time: %f]\n" t6
+  Printf.printf "boolean tree      [time: %f]\n" t6;
+  Printf.printf "population count  [time: %f]\n" t7
