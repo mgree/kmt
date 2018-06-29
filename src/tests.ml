@@ -1,6 +1,7 @@
 open Kat
 open Addition
 open Boolean
+open Product
 open Automata
 
 module T = ANSITerminal
@@ -61,9 +62,11 @@ let check tests =
 
 (* Unit tests *)
 module Unit = struct
+  module Prod = Product(Addition)(Boolean)
 
   module TA = Tester(Addition.K)
   module TB = Tester(Boolean.K)
+  module TP = Tester(Prod.K)
 
   let test0 () = 
     TA.assert_equivalent 
@@ -180,6 +183,22 @@ module Unit = struct
     let s2 = "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))" in
     TB.assert_equivalent s1 s2
 
+  let test23 () = 
+    TP.assert_equivalent
+      "set(x,T); x=T; inc(y,1)"
+      "set(x,T); inc(y,1)"
+  
+  let test24 () = 
+    TP.assert_not_equivalent
+      "set(x,T); inc(y,1)"
+      "inc(y,1); set(x,T)"
+
+  let test25 () = 
+    TP.assert_not_equivalent 
+      "a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1))"
+      "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)"
+
+  
   let tests = 
     ["Idempotency1" >:: test0;
      "Idempotency2" >:: test1;
@@ -203,7 +222,10 @@ module Unit = struct
      "Boolean-associativity" >:: test19;
      "Boolean-multiple-vars" >:: test20;
      "Boolean-multiple-vars2" >:: test21;
-     "Boolean-tree-ordering" >:: test22]
+     "Boolean-tree-ordering" >:: test22;
+     "Product-parsing" >:: test23;
+     "Product-action-ordering" >:: test24;
+     "Product-population-count" >:: test25]
 
 end;;
 

@@ -50,26 +50,26 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | PSeq(x,y) -> K.pseq (from_test_right x) (from_test_right y)
       | Placeholder i -> K.placeholder i
 
-    let rec to_test_left (a : K.Test.t) : T1.K.Test.t = 
+    let rec to_test_left (a : K.Test.t) (f : T2.K.A.t -> T1.K.Test.t) : T1.K.Test.t = 
       match a.node with 
       | Zero -> T1.K.zero ()
       | One -> T1.K.one ()
       | Theory (Left x) -> T1.K.theory x
-      | Theory (Right _) -> failwith "impossible" 
-      | Not x -> T1.K.not (to_test_left x)
-      | PPar(x,y) -> T1.K.ppar (to_test_left x) (to_test_left y)
-      | PSeq(x,y) -> T1.K.pseq (to_test_left x) (to_test_left y)
+      | Theory (Right y) -> f y 
+      | Not x -> T1.K.not (to_test_left x f)
+      | PPar(x,y) -> T1.K.ppar (to_test_left x f) (to_test_left y f)
+      | PSeq(x,y) -> T1.K.pseq (to_test_left x f) (to_test_left y f)
       | Placeholder i -> T1.K.placeholder i
   
-    let rec to_test_right (a : K.Test.t) : T2.K.Test.t = 
+    let rec to_test_right (a : K.Test.t) (f : T1.K.A.t -> T2.K.Test.t) : T2.K.Test.t = 
       match a.node with 
       | Zero -> T2.K.zero ()
       | One -> T2.K.one ()
       | Theory (Right x) -> T2.K.theory x
-      | Theory (Left _) -> failwith "impossible" 
-      | Not x -> T2.K.not (to_test_right x)
-      | PPar(x,y) -> T2.K.ppar (to_test_right x) (to_test_right y)
-      | PSeq(x,y) -> T2.K.pseq (to_test_right x) (to_test_right y)
+      | Theory (Left y) -> f y 
+      | Not x -> T2.K.not (to_test_right x f)
+      | PPar(x,y) -> T2.K.ppar (to_test_right x f) (to_test_right y f)
+      | PSeq(x,y) -> T2.K.pseq (to_test_right x f) (to_test_right y f)
       | Placeholder i -> T2.K.placeholder i
   
     let convert_from_left set = 
@@ -165,9 +165,13 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | Placeholder i -> failwith "impossible"
 
     let satisfiable (a: K.Test.t) = 
-      if only_left a then T1.satisfiable (to_test_left a)
-      else if only_right a then T2.satisfiable (to_test_right a)
+      if only_left a then T1.satisfiable (to_test_left a (fun _ -> failwith ""))
+      else if only_right a then T2.satisfiable (to_test_right a (fun _ -> failwith ""))
       else failwith "unimplemented"
+        (* total hack. does not work in general
+        let x = to_test_left a (fun a -> T1.K.one()) in 
+        let y = to_test_right a (fun a -> T2.K.one()) in 
+        T1.satisfiable x && T2.satisfiable y *)
     
   end  
 
