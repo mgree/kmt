@@ -1,10 +1,13 @@
 open Kat
 open Addition
+open Boolean
 open Automata
 
 module T = ANSITerminal
-module K = Addition.K
-module A = Automata(K)
+module KA = Addition.K
+module KB = Boolean.K 
+module AA = Automata(KA)
+module AB = Automata(KB)
 
 let variables = ["a"; "b"; "c"; "d"; "e"; "f"; "g"]
 
@@ -47,22 +50,69 @@ module Random (K : KAT_IMPL) = struct
 
 end
 
-module R = Random(K)
+module RA = Random(KA)
 
 let test_astar_a test = 
-  let term1 = K.pred test in 
-  let term2 = K.star term1 in
-  let auto1 = A.of_term term1 in
-  let auto2 = A.of_term term2 in
-  let eq = A.equivalent auto1 auto2 in 
+  let term1 = KA.pred test in 
+  let term2 = KA.star term1 in
+  let auto1 = AA.of_term term1 in
+  let auto2 = AA.of_term term2 in
+  let eq = AA.equivalent auto1 auto2 in 
   assert (not eq);
   ()
 
+let test_count_twice () = 
+  let term1 = KA.parse "(inc(x,1))*; x > 10" in
+  let term2 = KA.parse "(inc(x,1))*;(inc(x,1))*; x > 10" in 
+  let auto1 = AA.of_term term1 in 
+  let auto2 = AA.of_term term2 in 
+  let eq = AA.equivalent auto1 auto2 in 
+  assert eq;
+  ()
+
+let test_count_order () = 
+  let term1 = KA.parse "(inc(x,1))*; x > 3; (inc(y,1))*; y > 3" in
+  let term2 = KA.parse "(inc(x,1))*; (inc(y,1))*; x > 3; y > 3" in 
+  let auto1 = AA.of_term term1 in 
+  let auto2 = AA.of_term term2 in 
+  let eq = AA.equivalent auto1 auto2 in 
+  assert eq;
+  ()
+
+let test_parity_loop () = 
+  let term1 = KB.parse "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*" in 
+  let term2 = KB.parse "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=F" in 
+  let auto1 = AB.of_term term1 in 
+  let auto2 = AB.of_term term2 in 
+  let eq = AB.equivalent auto1 auto2 in 
+  assert eq;
+  ()
+
+
+let test_boolean_formula () = 
+  let term1 = KA.parse "(inc(x,1))*; x > 3; (inc(y,1))*; y > 3" in
+  let term2 = KA.parse "(inc(x,1))*; (inc(y,1))*; x > 3; y > 3" in 
+  let auto1 = AA.of_term term1 in 
+  let auto2 = AA.of_term term2 in 
+  let eq = AA.equivalent auto1 auto2 in 
+  assert eq;
+  ()
+
+
 let main = 
-  let test1 = R.random_test 10 (fun () -> random_addition_theory 2 3) in 
-  let test2 = R.random_test 100 (fun () -> random_addition_theory 2 3) in 
-  let (_, t1) = Common.time test_astar_a test1 in
+  let test1 = RA.random_test 10 (fun () -> random_addition_theory 2 3) in 
+  let test2 = RA.random_test 100 (fun () -> random_addition_theory 2 3) in 
+  (* let (_, t1) = Common.time test_astar_a test1 in
   let (_, t2) = Common.time test_astar_a test2 in
-  Printf.printf "a* != a (10)      [time: %f]\n" t1;
-  Printf.printf "a* != a (100)     [time: %f]\n" t2;
+  let (_, t3) = Common.time test_count_twice () in 
+  let (_, t4) = Common.time test_count_order () in *)
+  let (_, t5) = Common.time test_parity_loop () in
+
+
+  (* Printf.printf "a* != a (10)      [time: %f]\n" t1;
+  Printf.printf "a* != a (100)     [time: %f]\n" t2; 
+  Printf.printf "count twice       [time: %f]\n" t3;
+  Printf.printf "count order       [time: %f]\n" t4; *)
+  Printf.printf "parity loop       [time: %f]\n" t5;
+
   ()
