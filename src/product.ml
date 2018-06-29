@@ -50,6 +50,28 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | PSeq(x,y) -> K.pseq (from_test_right x) (from_test_right y)
       | Placeholder i -> K.placeholder i
 
+    let rec to_test_left (a : K.Test.t) : T1.K.Test.t = 
+      match a.node with 
+      | Zero -> T1.K.zero ()
+      | One -> T1.K.one ()
+      | Theory (Left x) -> T1.K.theory x
+      | Theory (Right _) -> failwith "impossible" 
+      | Not x -> T1.K.not (to_test_left x)
+      | PPar(x,y) -> T1.K.ppar (to_test_left x) (to_test_left y)
+      | PSeq(x,y) -> T1.K.pseq (to_test_left x) (to_test_left y)
+      | Placeholder i -> T1.K.placeholder i
+  
+    let rec to_test_right (a : K.Test.t) : T2.K.Test.t = 
+      match a.node with 
+      | Zero -> T2.K.zero ()
+      | One -> T2.K.one ()
+      | Theory (Right x) -> T2.K.theory x
+      | Theory (Left _) -> failwith "impossible" 
+      | Not x -> T2.K.not (to_test_right x)
+      | PPar(x,y) -> T2.K.ppar (to_test_right x) (to_test_right y)
+      | PSeq(x,y) -> T2.K.pseq (to_test_right x) (to_test_right y)
+      | Placeholder i -> T2.K.placeholder i
+  
     let convert_from_left set = 
       BatSet.PSet.fold 
         (fun v acc -> BatSet.PSet.add (from_test_left v) acc) 
@@ -126,7 +148,26 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
 
     let unbounded () = T1.unbounded() || T2.unbounded()
   
-    let satisfiable (a: K.Test.t) = failwith ""
+    let rec only_left (a : K.Test.t) : bool = 
+      match a.node with 
+      | Zero | One | Theory (Left _) -> true
+      | Theory (Right _) -> false 
+      | Not x -> only_left x
+      | PPar(x,y) | PSeq(x,y) -> (only_left x && only_left y)
+      | Placeholder i -> failwith "impossible"
+
+    let rec only_right (a : K.Test.t) : bool = 
+      match a.node with 
+      | Zero | One | Theory (Right _) -> true
+      | Theory (Left _) -> false 
+      | Not x -> only_right x
+      | PPar(x,y) | PSeq(x,y) -> (only_right x && only_right y)
+      | Placeholder i -> failwith "impossible"
+
+    let satisfiable (a: K.Test.t) = 
+      if only_left a then T1.satisfiable (to_test_left a)
+      else if only_right a then T2.satisfiable (to_test_right a)
+      else failwith "unimplemented"
     
   end  
 
