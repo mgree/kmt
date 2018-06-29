@@ -54,7 +54,7 @@ let check tests =
         T.print_string [] (Common.repeat spaces " ");
         T.print_string [T.Foreground T.Red] "[Failed]\n\n";
         T.print_string [T.Foreground T.Black] (s1 ^ "\n");
-        T.print_string [T.Foreground T.Black] (s2 ^ "\n\n");
+        T.print_string [T.Foreground T.Black] (s2 ^ "\n\n")
   ) results;
   T.print_string [] "=============================\n"
 
@@ -171,9 +171,14 @@ module Unit = struct
       "(x=T; set(y,T) + x=F; set(y,F))"
 
   let test21 () = 
-    TB.assert_equivalent
+    TB.assert_not_equivalent
       "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)"
       "(x=T; set(y,T) + x=F; set(y,F))"
+
+  let test22 () = 
+    let s1 = "set(w,F); set(x,T); set(y,F); set(z,F); ((w=T + x=T + y=T + z=T); set(a,T) + (not (w=T + x=T + y=T + z=T)); set(a,F))" in
+    let s2 = "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))" in
+    TB.assert_equivalent s1 s2
 
   let tests = 
     ["Idempotency1" >:: test0;
@@ -196,7 +201,9 @@ module Unit = struct
      "Boolean-parity-loop2" >:: test17;
      "Boolean-finiteness" >:: test18;
      "Boolean-associativity" >:: test19;
-     "Boolean-multiple-vars" >:: test20]
+     "Boolean-multiple-vars" >:: test20;
+     "Boolean-multiple-vars2" >:: test21;
+     "Boolean-tree-ordering" >:: test22]
 
 end;;
 

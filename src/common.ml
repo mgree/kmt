@@ -68,6 +68,27 @@ module Option = struct
     | Some v -> v
 end
 
+module Either = struct 
+
+  (* Creating collection types of pairs *)
+  module Make(X : CollectionType)(Y : CollectionType) = struct 
+    type t = (X.t, Y.t) either
+    let compare a b = 
+      match a,b with 
+      | Left x, Left y -> X.compare x y 
+      | Right x, Right y -> Y.compare x y 
+      | Left _, Right _ -> -1 
+      | Right _, Left _ -> 1
+    let equal x y = compare x y = 0 
+    let hash = function 
+      | Left x -> 5 + X.hash x
+      | Right y -> 7 + Y.hash y
+    let show = function 
+      | Left x -> "Left(" ^ (X.show x) ^ ")" 
+      | Right y -> "Right(" ^ (Y.show y) ^ ")"
+  end
+end
+
 (* Pair helper functions *)
 
 module Pair = struct 
