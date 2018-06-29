@@ -115,18 +115,18 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
         | Some z -> Some (from_test_right z)
         end
 
-    let satisfiable (a : Test.t) : bool = failwith ""
-      (* match a with 
-      | Left x -> T1.satisfiable x
-      | Right y -> T2.satisfiable y *)
-
     let merge (p1 : P.t) (p2 : P.t) : P.t = failwith ""
 
     let reduce a p = failwith ""
 
-    let variable _ = failwith ""
+    let variable p = 
+      match p with 
+      | Left x -> T1.variable x 
+      | Right y -> T2.variable y
 
     let unbounded () = T1.unbounded() || T2.unbounded()
+  
+    let satisfiable (a: K.Test.t) = failwith ""
     
   end  
 
