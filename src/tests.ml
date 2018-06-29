@@ -160,6 +160,21 @@ module Unit = struct
       "x=F + x=T"
       "true"
 
+  let test19 () = 
+    TB.assert_equivalent
+      "(x=F + y=F) + z=F"
+      "x=F + (y=F + z=F)"
+
+  let test20 () = 
+    TB.assert_equivalent
+      "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=T + x=F;y=F)"
+      "(x=T; set(y,T) + x=F; set(y,F))"
+
+  let test21 () = 
+    TB.assert_equivalent
+      "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)"
+      "(x=T; set(y,T) + x=F; set(y,F))"
+
   let tests = 
     ["Idempotency1" >:: test0;
      "Idempotency2" >:: test1;
@@ -179,7 +194,9 @@ module Unit = struct
      "Boolean-assign-eq2" >:: test15;
      "Boolean-parity-loop" >:: test16;
      "Boolean-parity-loop2" >:: test17;
-     "Boolean-finiteness" >:: test18]
+     "Boolean-finiteness" >:: test18;
+     "Boolean-associativity" >:: test19;
+     "Boolean-multiple-vars" >:: test20]
 
 end;;
 

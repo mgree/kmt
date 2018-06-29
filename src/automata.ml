@@ -366,7 +366,8 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
 
     module TSPair = Common.Pair.Make(K.Test)(StateSet)
     module TSPairSet = SafeSet.Make(TSPair)
-    module ActionMap = SafeMap.Make(Common.Option.Make(K.P))(TSPairSet)
+    module POption = Common.Option.Make(K.P)
+    module ActionMap = SafeMap.Make(POption)(TSPairSet)
 
     let get_action_map (x : Transitions.t) : ActionMap.t = 
       Transitions.fold (fun (a,po) vs acc -> 
@@ -391,6 +392,7 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
         replace x y placeholder 
       in
       let trans (i,j) =
+        (* Printf.printf "  State: (%d,%d)\n" i j; *)
         let accept_test = acceptance pred j in
         let x = transition pol i in 
         let y = transition pred j in
@@ -404,7 +406,10 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
                 let existing = PairAutomata.Transitions.find key acc2 in
                 PairAutomata.Transitions.add key (PairAutomata.StateSet.union nstates existing) acc2;
               with _ ->
-              PairAutomata.Transitions.add (K.pseq a b, None) nstates acc2
+                let test = K.pseq a b in
+                if test <> K.zero () then
+                  PairAutomata.Transitions.add (test, None) nstates acc2
+                else acc2
             ) y acc1
           ) x (PairAutomata.Transitions.empty()) in 
           ret
@@ -416,13 +421,21 @@ module Automata(K : KAT_IMPL) : (KAT_AUTOMATA with module K=K) = struct
             let ts = ref (PairAutomata.Transitions.empty()) in
             TSPairSet.iter (fun (a,l1) -> 
               TSPairSet.iter (fun (b,l2) -> 
+                (* Printf.printf "  iter: a=%s, b=%s, l1=%s, l2=%s\n" (K.Test.show a) (K.Test.show b) (StateSet.show l1) (StateSet.show l2); *)
                 let next_states = cross l1 l2 in
                 let new_test = replace a accept_test placeholder in
-                if new_test <> K.zero() then
+                (* Printf.printf "    new_test: %s\n" (K.Test.show new_test); *)
+                if new_test <> K.zero() then begin
+                  (* Printf.printf "    added?: (%s,%s)\n" (K.Test.show new_test) (POption.show po); *)
                   ts := PairAutomata.Transitions.add (new_test, po) next_states !ts
+                end;
               ) pairs'
             ) pairs;
-            !ts
+            (* PairAutomata.Transitions.iter (fun k v -> (
+              Printf.printf "  FINAL IS: (%s,%s)\n" (PairAutomata.Transition.show k) (PairAutomata.StateSet.show v)
+            )) !ts; *)
+            PairAutomata.Transitions.disjoint_union acc !ts
+
             (* let next_states = cross vs vs' in
             PairAutomata.Transitions.add (replace a accept_test placeholder, po) next_states acc *)
           ) mapx (PairAutomata.Transitions.empty()) in 

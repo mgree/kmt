@@ -134,10 +134,8 @@ module rec Boolean : (THEORY with type A.t = a and type P.t = p) = struct
     (* create variables from each referenced variable *)
     let map = StrSet.fold (fun str acc ->
       let sym = (Symbol.mk_string ctx str) in
-      let int_sort = Arithmetic.Integer.mk_sort ctx in
-      let xc = (Expr.mk_const ctx sym int_sort) in
-      let is_nat = Arithmetic.mk_ge ctx xc (Arithmetic.Integer.mk_numeral_i ctx 0) in
-      Solver.add solver [is_nat];
+      let bool_sort = Z3.Boolean.mk_sort ctx in
+      let xc = (Expr.mk_const ctx sym bool_sort) in
       StrMap.add str xc acc
     ) vars StrMap.empty in
     (* recrusively generate the formula and assert it *)
