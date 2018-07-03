@@ -2,28 +2,21 @@ open Kat
 open Addition
 open Network
 open Automata
+open Complete
 open Decide
+open Product
+open Boolean
 
-(* module Net = Complete.CompleteTheory(Network)
-module D = Decide(Net) *)
-module K = Addition.K
-module A = Automata(K)
+module Prod = Product(Addition)(Boolean)
+module KP = Prod.K
+module C = CompleteTheory(Prod)
+module D = Decide(C)
 
 let main = 
-  (* let x = K.parse "(inc(x,1) + x>10)*" in *)
-  (* let x = K.parse "true" in
-  let y = K.parse "true + sw=2;sw<-2" in *)
-  let x = K.parse "(x>1) + (y>1)" in
-  let y = K.parse "(y>1) + (x>1)" in
-  (* Printf.printf "Term x:       %s\n" (K.Term.show x);
-  Printf.printf "Term y:       %s\n" (K.Term.show y);
-  Printf.printf "Normalized x: %s\n" (K.Term.show (D.normalize x));
-  Printf.printf "Normalized y: %s\n" (K.Term.show (D.normalize y));
-  Printf.printf "Equvialent: %b\n" (D.equivalent x y); *)
-  let a1 = A.of_term x in 
-  let a2 = A.of_term y in
-  Printf.printf "Equivalent (tracing): %b\n" (A.equivalent a1 a2);
-
+  let a = D.K.parse "y<0; a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>0" in 
+  let b = D.K.parse "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" in 
+  let eq = D.equivalent a b in
+  Printf.printf "Equivalent (normalize): %b\n" (eq)
 
 (*
 let test = ref false
