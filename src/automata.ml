@@ -94,13 +94,9 @@ end
 
 module type KAT_AUTOMATA = sig
   module K : KAT_IMPL
-
   type t
-
   val of_term : K.Term.t -> t
-
   val equivalent : t -> t -> bool
-
   val print : t -> unit
 end
 
@@ -110,19 +106,14 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
   (* Partial derivative tuple *)
   module Derivative = struct
     type t = K.Test.t * int * K.Term.t
-
     let compare (a, l1, b) (c, l2, d) =
       let cmp = K.Test.compare a c in
       if cmp <> 0 then cmp
       else
         let cmp = l1 - l2 in
         if cmp <> 0 then cmp else K.Term.compare b d
-
-
     let equal x y = compare x y = 0
-
     let hash (a, l, b) = K.Test.hash a + l + K.Term.hash b
-
     let show (a, l, b) =
       let s1 = K.Test.show a in
       let s2 = string_of_int l in
@@ -142,20 +133,17 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       (fun trip acc -> DerivativeSet.add (f trip p) acc)
       trips (DerivativeSet.empty ())
 
-
   let dotl p trips =
     let f p (q, l, k) = (K.pseq p q, l, k) in
     DerivativeSet.fold
       (fun trip acc -> DerivativeSet.add (f p trip) acc)
       trips (DerivativeSet.empty ())
 
-
   let rec observation_test (test: K.Test.t) =
     match test.node with
     | Theory _ | Zero | One | Placeholder _ | Not _ -> test
     | PPar (a, b) -> K.ppar (observation_test a) (observation_test b)
     | PSeq (a, b) -> K.pseq (observation_test a) (observation_test b)
-
 
   let rec observation (term: K.Term.t) =
     match term.node with
@@ -164,7 +152,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | Par (a, b) -> K.ppar (observation a) (observation b)
     | Seq (a, b) -> K.pseq (observation a) (observation b)
     | Star a -> K.one ()
-
 
   let rec derivative_test (test: K.Test.t) : DerivativeSet.t =
     match test.node with
@@ -178,7 +165,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         let r = dotl (observation (K.pred a)) (derivative_test b) in
         DerivativeSet.union l r
 
-
   let rec derivative (term: K.Term.t) : DerivativeSet.t =
     match term.node with
     | Action (i, p) -> DerivativeSet.singleton (K.one (), i, K.pred (K.one ()))
@@ -190,7 +176,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
           (dotl (observation q) (derivative r))
     | Star q -> dotr (dotl (observation term) (derivative q)) term
 
-
   let rec action_map (term: K.Term.t) : NatActionMap.t =
     match term.node with
     | Action (i, p) -> NatActionMap.singleton i p
@@ -198,7 +183,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | Par (a, b) | Seq (a, b) ->
         NatActionMap.disjoint_union (action_map a) (action_map b)
     | Star a -> action_map a
-
 
   let rec replace_test (test: K.Test.t) (map: TestNatMap.t) : K.Test.t =
     match test.node with
@@ -209,7 +193,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | PSeq (a, b) -> K.pseq (replace_test a map) (replace_test b map)
     | Theory a -> K.placeholder (TestNatMap.find test map)
 
-
   let rec replace_term (term: K.Term.t) (map: TestNatMap.t) : K.Term.t =
     match term.node with
     | Action (i, p) -> term
@@ -217,7 +200,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | Par (a, b) -> K.par (replace_term a map) (replace_term b map)
     | Seq (a, b) -> K.seq (replace_term a map) (replace_term b map)
     | Pred a -> K.pred (replace_test a map)
-
 
   let rec build_map_test (test: K.Test.t) (i: int ref) : TestNatMap.t =
     match test.node with
@@ -230,7 +212,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | PPar (a, b) | PSeq (a, b) ->
         TestNatMap.disjoint_union (build_map_test a i) (build_map_test b i)
 
-
   let rec build_map (term: K.Term.t) (i: int ref) : TestNatMap.t =
     match term.node with
     | Action (i, p) -> TestNatMap.empty ()
@@ -239,12 +220,10 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         TestNatMap.disjoint_union (build_map a i) (build_map b i)
     | Pred a -> build_map_test a i
 
-
   let replace_theory_term (term: K.Term.t) : K.Term.t * TestNatMap.t =
     let map = build_map term (ref 0) in
     let new_term = replace_term term map in
     (new_term, map)
-
 
   let rec characters (term: K.Term.t) : ActionSet.t =
     match term.node with
@@ -252,7 +231,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | Pred a -> ActionSet.empty ()
     | Par (a, b) | Seq (a, b) -> ActionSet.union (characters a) (characters b)
     | Star a -> characters a
-
 
   module ASet = SafeSet.Make (K.A)
   module TSet = SafeSet.Make (K.Test)
@@ -275,10 +253,8 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       | Theory _ -> TSet.mem a l
       | Placeholder _ -> failwith "Unreachable: is_covered_by"
 
-
     let get_implied_subs (sub: K.Test.t) (subs: TSet.t) : TSet.t =
       TSet.filter (K.implies sub) subs
-
 
     module SubtermsSet = SafeSet.Make (TSet)
     module SubtermsMap = SafeMap.Make (K.Test) (TSet)
@@ -302,7 +278,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
             SubtermsSet.union x y
       in
       aux subs (TSet.empty ()) (TSet.empty ()) map
-
 
     let test_automata (test: K.Test.t) (chars: ActionSet.t) : TestAutomata.t =
       let subs = K.subterms test in
@@ -416,7 +391,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       | PPar (a, b) -> K.ppar (replace a y i) (replace b y i)
       | PSeq (a, b) -> K.pseq (replace a y i) (replace b y i)
 
-
     module TSPair = Common.Pair.Make (K.Test) (StateSet)
     module TSPairSet = SafeSet.Make (TSPair)
     module POption = Common.Option.Make (K.P)
@@ -430,7 +404,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
             ActionMap.add po (TSPairSet.add (a, vs) existing) acc
           with _ -> ActionMap.add po (TSPairSet.singleton (a, vs)) acc )
         x (ActionMap.empty ())
-
 
     let intersect (pol: t) (pred: t) (placeholder: int) : PairAutomata.t =
       let cross is js =
@@ -531,7 +504,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
           Printf.sprintf "Node(%s,%s,%s,%s)" (K.Test.show t) (StateSet.show ls)
             (show_tree left) (show_tree right)
 
-
     let rec refine (t: minterm_tree) (a: K.Test.t) (l: StateSet.t) =
       match t with
       | Node (b, ls, left, right) ->
@@ -553,7 +525,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       | Node (b, ls, left, right) ->
           if left = Leaf then [(b, ls)] else leaves left @ leaves right
       | Leaf -> failwith "impossible: leaves"
-
 
     let determinize (auto: t) : NatSetAutomata.t =
       let convert states =
@@ -644,7 +615,6 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     in
     aux term
 
-
   let of_term (term: K.Term.t) : t =
     let term = add_labels term in
     let term, placeholder_map = replace_theory_term term in
@@ -725,13 +695,9 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
 
     module EqState = struct
       type t = eq_state
-
       let compare = compare_eq_state
-
       let equal = equal_eq_state
-
       let hash = Hashtbl.hash
-
       let show = function Garbage -> "Garbage" | State s -> string_of_int s
     end
 

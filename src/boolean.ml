@@ -98,14 +98,6 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
 
   open Z3
 
-  let rec all_variables (a: K.Test.t) : StrSet.t =
-    match a.node with
-    | One | Zero | Placeholder _ -> StrSet.empty
-    | Not b -> all_variables b
-    | PPar (b, c) | PSeq (b, c) ->
-        StrSet.union (all_variables b) (all_variables c)
-    | Theory Bool (x, _) -> StrSet.singleton x
-
   let theory_to_z3_expr (a : A.t) (ctx : Z3.context) (map : Z3.Expr.expr StrMap.t) = 
     match a with Bool (x, v) ->
     let var = StrMap.find x map in

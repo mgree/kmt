@@ -112,7 +112,6 @@ let cross_product x y base f =
       )
     x base
 
-
 let unreachable () = failwith "unreachable"
 
 (* Convenience functions that help for 
@@ -125,13 +124,11 @@ let debug f = if debug_enabled then f () else ()
 let rec repeat n str =
   match n with x when x <= 0 -> "" | 1 -> str | _ -> str ^ repeat (n - 1) str
 
-
 let time f x =
   let t = Sys.time () in
   let fx = f x in
   let time = Sys.time () -. t in
   (fx, time)
-
 
 let add_sep sep acc = if acc = "" then acc else sep ^ acc
 
@@ -139,16 +136,13 @@ let show_set f fold set =
   let elts = fold (fun x acc -> f x ^ add_sep "," acc) set "" in
   "{" ^ elts ^ "}"
 
-
 let show_list f lst =
   let elts = List.fold_left (fun acc x -> f x ^ add_sep "," acc) "" lst in
   "[" ^ elts ^ "]"
 
-
 let show_map fkey fval fold map =
   let aux k v acc = fkey k ^ "==>" ^ fval v ^ add_sep "," acc in
   "{" ^ fold aux map "" ^ "}"
-
 
 (* Set default seed value to make  
    randomized tests deterministic *)

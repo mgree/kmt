@@ -7,15 +7,15 @@ open Decide
 open Product
 open Boolean
 
-module Prod = Product(Addition)(Boolean)
-module KP = Prod.K
-module C = CompleteTheory(Prod)
-module D = Decide(C)
+module K = Addition.K
+module A = Automata(K)
 
 let main = 
-  let a = D.K.parse "y<0; a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>0" in 
-  let b = D.K.parse "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" in 
-  let eq = D.equivalent a b in
+  let a = K.parse "(inc(x,1);x>1)*" in 
+  let b = K.parse "true + x>0;inc(x,1);inc(x,1)*" in 
+  let auto1 = A.of_term a in 
+  let auto2 = A.of_term b in 
+  let eq = A.equivalent auto1 auto2 in
   Printf.printf "Equivalent (normalize): %b\n" (eq)
 
 (*

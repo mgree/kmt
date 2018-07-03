@@ -117,14 +117,6 @@ module rec Addition : THEORY with type A.t = a and type P.t = p = struct
 
   open Z3
 
-  let rec all_variables (a: K.Test.t) : StrSet.t =
-    match a.node with
-    | One | Zero | Placeholder _ -> StrSet.empty
-    | Not b -> all_variables b
-    | PPar (b, c) | PSeq (b, c) ->
-        StrSet.union (all_variables b) (all_variables c)
-    | Theory Gt (x, _) | Theory Lt (x, _) -> StrSet.singleton x
-
   let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
     let sym = Symbol.mk_string ctx str in
     let int_sort = Arithmetic.Integer.mk_sort ctx in
