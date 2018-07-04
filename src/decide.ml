@@ -12,8 +12,6 @@ module Decide (T : THEORY) = struct
 
   (* module C = CompleteTheory(T) *)
 
-  let debug f = ()
-
   type nf_elt = K.Test.t * K.Term.t
 
   type nf = nf_elt PSet.t
@@ -24,7 +22,6 @@ module Decide (T : THEORY) = struct
     let cmp = a.tag - c.tag in
     if cmp <> 0 then cmp else b.tag - d.tag
 
-
   let empty () = PSet.create compare_nf_elt
 
   let singleton x = PSet.singleton ~cmp:compare_nf_elt x
@@ -33,7 +30,6 @@ module Decide (T : THEORY) = struct
     let acc = ref "" in
     for j = 0 to i - 1 do acc := !acc ^ s done ;
     !acc
-
 
   let spaces i = duplicate " " (4 * i)
 
@@ -47,13 +43,11 @@ module Decide (T : THEORY) = struct
     in
     "{" ^ ret ^ "}"
 
-
   let rec flatten (a: K.Test.t) : K.Test.t PSet.t =
     match a.node with
     | Theory _ | PPar _ | One | Not _ -> PSet.singleton ~cmp:compare_test a
     | PSeq (b, c) -> PSet.union (flatten b) (flatten c)
     | Placeholder _ | Zero -> failwith "impossible"
-
 
   let rec size (a: K.Test.t) =
     match a.node with
@@ -63,10 +57,8 @@ module Decide (T : THEORY) = struct
     | Not b -> 1 + size b
     | Placeholder _ -> failwith "impossible"
 
-
   let seq_all (x: K.Test.t PSet.t) =
     PSet.fold (fun test acc -> K.pseq test acc) x (K.one ())
-
 
   let split (a: K.Test.t) (x: nf) : nf * nf =
     if PSet.is_empty x then (empty (), empty ())
@@ -84,7 +76,6 @@ module Decide (T : THEORY) = struct
         PSet.map (fun (tests, term) -> (seq_all tests, term)) missing
       in
       (contains, missing)
-
 
   let pick_mt (x: nf) : K.Test.t =
     let choices =
@@ -104,7 +95,6 @@ module Decide (T : THEORY) = struct
     in
     match pick with None -> failwith "impossible" | Some (a, _) -> a
 
-
   let zero = K.zero ()
 
   let one = K.one ()
@@ -112,7 +102,6 @@ module Decide (T : THEORY) = struct
   let stitch (a: K.Test.t) (x: nf) : nf =
     PSet.map (fun (test, term) -> (K.pseq a test, term)) x
     |> PSet.filter (fun (test, _) -> test.node <> Zero)
-
 
   let rec normalize (p: K.Term.t) : K.Term.t =
     let nf = normalize_term 0 p in
@@ -122,7 +111,6 @@ module Decide (T : THEORY) = struct
     List.fold_left
       (fun acc (test, term) -> K.par acc (K.seq (K.pred test) term))
       base nf
-
 
   and normalize_term (i: int) (p: K.Term.t) : nf =
     debug (fun () ->
@@ -242,16 +230,45 @@ module Decide (T : THEORY) = struct
         PSet.union elts acc )
       x (empty ())
 
+  (* and push_back_star_opt (i : int) (x : nf) : nf =
+    debug (fun () -> Printf.printf "%spush_back_star_opt: %s\n" (spaces i) (show_nf x) ) ;
+    let without_tests : nf = PSet.map (fun (a,p) -> (K.one(), p)) x in
+    let total : nf ref = ref (singleton (K.one(), K.pred (K.one()))) in
+    let acc = ref x in
+    let break = ref false in
+    let k = ref 0 in
+    while (not !break) && (!k < 10) do 
+      debug (fun () -> Printf.printf "%sacc now: %s\n" (spaces i) (show_nf !acc)); 
+      let z1 = push_back_j (i+1) !acc x in
+      let z2 = push_back_j (i+1) !acc without_tests in 
+      if (PSet.equal z1 z2) then begin
+        debug (fun () -> Printf.printf "%s[equal]: true\n" (spaces i));
+        let stared : K.Term.t = 
+          PSet.fold (fun (_,p) acc -> K.par acc p) without_tests (K.pred (K.zero()))
+          |> K.star 
+        in 
+        let the_rest = PSet.map (fun (a,p) -> (a, K.seq p stared)) !acc in
+        total := PSet.union !total the_rest;
+        break := true
+      end else begin
+        debug (fun () -> Printf.printf "%s[equal]: false\n" (spaces i)); 
+        total := PSet.union !total z1;
+        acc := z1
+      end;
+      incr k
+    done;
+    if (!break) then begin
+      debug (fun () -> Printf.printf "%sresult: %s\n" (spaces i) (show_nf !total)) ;
+      !total
+    end else failwith "CRAP" *)
 
   and push_back_star (i: int) (x: nf) : nf =
-    debug (fun () ->
-        Printf.printf "%spush_back_star: %s\n" (spaces i) (show_nf x) ) ;
+    debug (fun () -> Printf.printf "%spush_back_star: %s\n" (spaces i) (show_nf x) ) ;
     let ret =
       if PSet.is_empty x then singleton (one, K.pred one)
       else
         let a = pick_mt x in
-        debug (fun () ->
-            Printf.printf "%sMaximal test:%s\n" (spaces i) (K.Test.show a) ) ;
+        debug (fun () -> Printf.printf "%sMaximal test:%s\n" (spaces i) (K.Test.show a) ) ;
         let x, y = split a x in
         if PSet.is_empty y then
           if a.node == One then

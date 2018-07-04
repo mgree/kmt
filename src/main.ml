@@ -9,13 +9,12 @@ open Boolean
 
 module K = Addition.K
 module A = Automata(K)
+module D = Decide(Addition)
 
 let main = 
-  let a = K.parse "(inc(x,1);x>1)*" in 
-  let b = K.parse "true + x>0;inc(x,1);inc(x,1)*" in 
-  let auto1 = A.of_term a in 
-  let auto2 = A.of_term b in 
-  let eq = A.equivalent auto1 auto2 in
+  let a = K.parse "(x>1; inc(x,1) + y>1; inc(y,1))*" in 
+  let b = K.parse "true" in 
+  let eq = D.equivalent a b in
   Printf.printf "Equivalent (normalize): %b\n" (eq)
 
 (*
