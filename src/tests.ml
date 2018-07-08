@@ -1,4 +1,5 @@
 open Kat
+open Incnat
 open Addition
 open Boolean
 open Product
@@ -64,6 +65,7 @@ let check tests =
 module Unit = struct
   module Prod = Product(Addition)(Boolean)
 
+  module TI = Tester(IncNat.K)              
   module TA = Tester(Addition.K)
   module TB = Tester(Boolean.K)
   module TP = Tester(Prod.K)
@@ -73,66 +75,131 @@ module Unit = struct
       "x > 2"  
       "x > 2"
 
+  let test0_incnat () = 
+    TI.assert_equivalent 
+      "x > 2"  
+      "x > 2"    
+
   let test1 () = 
     TA.assert_equivalent 
       "inc(x,1)*; x > 2"  
       "inc(x,1)*; x > 2"
+
+  let test1_incnat () = 
+    TI.assert_equivalent 
+      "inc(x)*; x > 2"  
+      "inc(x)*; x > 2"
 
   let test2 () = 
     TA.assert_equivalent 
       "inc(x,1);inc(x,1)*; x > 2"
       "x>1;inc(x,1) + inc(x,1);inc(x,1);inc(x,1)*; x > 2"
 
+  let test2_incnat () = 
+    TI.assert_equivalent 
+      "inc(x);inc(x)*; x > 2"
+      "x>1;inc(x) + inc(x);inc(x);inc(x)*; x > 2"
+    
   let test3 () = 
     TA.assert_equivalent 
       "inc(x,1)*; x > 2"  
       "x>2 + inc(x,1);inc(x,1)*; x > 2"
 
+  let test3_incnat () = 
+    TI.assert_equivalent 
+      "inc(x)*; x > 2"  
+      "x>2 + inc(x);inc(x)*; x > 2"
+    
   let test4 () = 
     TA.assert_equivalent 
       "inc(x,1); inc(x,1); inc(x,1); x > 2"  
       "inc(x,1); inc(x,1); inc(x,1); x > 1"
 
+  let test4_incnat () = 
+    TI.assert_equivalent 
+      "inc(x); inc(x); inc(x); x > 2"  
+      "inc(x); inc(x); inc(x); x > 1"
+
   let test5 () = 
     TA.assert_not_equivalent 
       "inc(x,1); inc(x,1); inc(x,1); x > 2"  
       "inc(x,1); inc(x,1); inc(x,1); x > 3"
-   
+
+  let test5_incnat () = 
+    TI.assert_not_equivalent 
+      "inc(x); inc(x); inc(x); x > 2"  
+      "inc(x); inc(x); inc(x); x > 3"
+    
   let test6 () = 
     TA.assert_equivalent 
       "inc(x,1);inc(y,1); x > 0; y > 0"
       "inc(x,1);inc(y,1); y > 0; x > 0"
 
+  let test6_incnat () = 
+    TI.assert_equivalent 
+      "inc(x);inc(y); x > 0; y > 0"
+      "inc(x);inc(y); y > 0; x > 0"
+    
   let test7 () = 
     TA.assert_not_equivalent 
       "inc(x,1);inc(x,1)*; x > 2"
       "x>2;inc(x,1) + inc(x,1);inc(x,1);inc(x,1)*; x > 2"
 
+  let test7_incnat () = 
+    TI.assert_not_equivalent 
+      "inc(x);inc(x)*; x > 2"
+      "x>2;inc(x) + inc(x);inc(x);inc(x)*; x > 2"
+    
   let test8 () = 
     TA.assert_equivalent 
       "x>2;x>1"
       "x>2"
 
+  let test8_incnat () = 
+    TI.assert_equivalent 
+      "x>2;x>1"
+      "x>2"
+    
   let test9 () = 
     TA.assert_equivalent
       "x > 2 + y > 1"
       "y > 1 + x > 2"
 
+  let test9_incnat () = 
+    TI.assert_equivalent
+      "x > 2 + y > 1"
+      "y > 1 + x > 2"
+    
   let test10 () = 
     TA.assert_equivalent
       "inc(x,1) + inc(x,1)"
       "inc(x,1)"
 
+  let test10_incnat () = 
+    TI.assert_equivalent
+      "inc(x) + inc(x)"
+      "inc(x)"
+    
   let test11 () = 
     TA.assert_equivalent
       "(inc(x,1);x>1)*"
       "true + x>0;inc(x,1);inc(x,1)*"
 
+  let test11_incnat () = 
+    TI.assert_equivalent
+      "(inc(x);x>1)*"
+      "true + x>0;inc(x);inc(x)*"
+    
   let test12 () = 
     TA.assert_not_equivalent
       "(inc(x,1);x>1)*"
       "true + inc(x,1);inc(x,1)*"
 
+  let test12_incnat () = 
+    TI.assert_not_equivalent
+      "(inc(x);x>1)*"
+      "true + inc(x);inc(x)*"
+    
   let test13 () = 
     TB.assert_equivalent
       "set(x,T); x=T"
@@ -222,6 +289,19 @@ module Unit = struct
      "Idempotency-actions" >:: test10;
      "Test-in-loop1" >:: test11; 
      "Test-in-loop2" >:: test12;
+     "Idempotency1 (incnat)" >:: test0_incnat;
+     "Idempotency2 (incnat)" >:: test1_incnat;
+     "Unrolling1 (incnat)" >:: test2_incnat;
+     "Unrolling2 (incnat)" >:: test3_incnat;
+     "Postcondition1 (incnat)" >:: test4_incnat; 
+     "Postcondition2 (incnat)" >:: test5_incnat;
+     "Commutativity (incnat)" >:: test6_incnat;
+     "Initial Conditions (incnat)" >:: test7_incnat;
+     "Greater than (incnat)" >:: test8_incnat;
+     "Commutativity-plus (incnat)" >:: test9_incnat;
+     "Idempotency-actions (incnat)" >:: test10_incnat;
+     "Test-in-loop1 (incnat)" >:: test11_incnat; 
+     "Test-in-loop2 (incnat)" >:: test12_incnat;
      "Boolean-assign-eq" >:: test13;
      "Boolean-assign-neq" >:: test14;
      "Boolean-assign-eq2" >:: test15;
