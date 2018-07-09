@@ -117,7 +117,7 @@ let unreachable () = failwith "unreachable"
 (* Convenience functions that help for 
    debugging various collection types *)
 
-let debug_enabled = true
+let debug_enabled = false
 
 let debug f = if debug_enabled then f () else ()
 
