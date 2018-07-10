@@ -6,27 +6,22 @@ open Range
 
 type a = Gt of string * int [@@deriving eq]
 
-type p = Increment of string [@@deriving eq]
+type p = Increment of string | Assign of string * int [@@deriving eq]
 
-let get_name_a = function Gt (x, _) -> x
-
-let get_name_p (Increment x) = x
-
-let get_value = function Gt (_, v) -> v
-
-let to_int = function Gt _ -> 1
-
-let compare_a a b =
-  let cmp = StrType.compare (get_name_a a) (get_name_a b) in
+let compare_a (Gt (x,n)) (Gt (y,m)) =
+  let cmp = StrType.compare x y in
   if cmp <> 0 then cmp
-  else
-    let cmp = get_value a - get_value b in
-    if cmp <> 0 then cmp else to_int a - to_int b
-
+  else n - m
 
 let compare_p p q =
-  match (p, q) with Increment x, Increment y ->
-    StrType.compare x y 
+  match (p, q) with
+  | Increment x, Increment y -> StrType.compare x y
+  | Assign (x,i), Assign (y,j) ->
+     let cmp = StrType.compare x y in
+     if cmp <> 0 then cmp
+     else i - j
+  | Increment _, Assign _ -> -1    
+  | Assign _, Increment _ -> 1
 
 
 module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
@@ -39,7 +34,9 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
     let compare = compare
     let hash = Hashtbl.hash
     let equal = equal_p
-    let show (Increment x) = "inc (" ^ x ^ ")"
+    let show = function
+      | Increment x -> "inc (" ^ x ^ ")"
+      | Assign (x,i) -> "set (" ^ x ^ "," ^ string_of_int i ^ ")"
   end
 
   module A : CollectionType with type t = a = struct
@@ -48,28 +45,31 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
     let hash = Hashtbl.hash
     let equal = equal_a
     let show = function
-      | Gt (x, v) -> x ^ ">" ^ string_of_int v
+      | Gt (x, n) -> x ^ ">" ^ string_of_int n
   end
 
-  let variable = get_name_p
+  let variable =  function
+    | Increment x -> x
+    | Assign (x,_) -> x
 
-  let variable_test = get_name_a
+  let variable_test (Gt (x,_)) = x
 
   let parse name es =
     match (name, es) with
     | "inc", [(EId s1)] -> Right (Increment s1)
+    | "set", [(EId s1);EId s2] -> Right (Assign (s1, int_of_string s2))
     | ">", [(EId s1); (EId s2)] -> Left (Gt (s1, int_of_string s2))
     | _, _ ->
-        failwith
-          ("Cannot create theory object from (" ^ name ^ ") and parameters")
+        failwith ("Cannot create theory object from (" ^ name ^ ") and parameters")
 
   open BatSet
 
-  let push_back (Increment x) a =
-    match a with
-    | Gt (_, j) when 1 > j -> PSet.singleton ~cmp:K.Test.compare (K.one ())
-    | Gt (y, j) when x = y ->
-        PSet.singleton ~cmp:K.Test.compare (K.theory (Gt (y, j - 1)))
+  let push_back p a =
+    match (p,a) with
+    | (Increment x, Gt (_, j)) when 1 > j -> PSet.singleton ~cmp:K.Test.compare (K.one ())
+    | (Increment x, Gt (y, j)) when x = y ->
+       PSet.singleton ~cmp:K.Test.compare (K.theory (Gt (y, j - 1)))
+    | (Assign (x,i), Gt (y,j)) when x = y -> PSet.singleton ~cmp:K.Test.compare (if i > j then K.one () else K.zero ())
     | _ -> PSet.singleton ~cmp:K.Test.compare (K.theory a)
 
 
@@ -147,7 +147,7 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
         in
         let rec aux (a: K.Test.t) : Range.t StrMap.t =
           match a.node with
-          | One | Zero | Placeholder _ -> failwith "Increment: satisfiability"
+          | One | Zero | Placeholder _ -> failwith "IncNat: satisfiability"
           | Not b -> StrMap.map Range.negate (aux b)
           | PPar (b, c) -> mergeOp (aux b) (aux c) Range.union
           | PSeq (b, c) -> mergeOp (aux b) (aux c) Range.inter

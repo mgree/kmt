@@ -199,6 +199,21 @@ module Unit = struct
     TI.assert_not_equivalent
       "(inc(x);x>1)*"
       "true + inc(x);inc(x)*"
+
+  let test13_incnat () =
+    TI.assert_equivalent
+      "set(x,0);x>0"
+      "false"
+
+  let test14_incnat () =
+    TI.assert_equivalent
+      "set(x,5);x>0"
+      "set(x,5)"
+
+  let test15_incnat () =
+    TI.assert_not_equivalent
+      "(inc(x))*;set(x,0)"
+      "set(x,0)"
     
   let test13 () = 
     TB.assert_equivalent
@@ -302,6 +317,9 @@ module Unit = struct
      "Idempotency-actions (incnat)" >:: test10_incnat;
      "Test-in-loop1 (incnat)" >:: test11_incnat; 
      "Test-in-loop2 (incnat)" >:: test12_incnat;
+     "Canceled-set (incnat)" >:: test13_incnat;
+     "Set-canceled-pred (incnat)" >:: test14_incnat;
+     "Tracing (incnat)" >:: test15_incnat;
      "Boolean-assign-eq" >:: test13;
      "Boolean-assign-neq" >:: test14;
      "Boolean-assign-eq2" >:: test15;
