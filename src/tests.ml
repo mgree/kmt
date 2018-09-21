@@ -289,6 +289,11 @@ module Unit = struct
     TP.assert_not_equivalent 
       "y<1; (a=F + a=T; inc(y,1))"
       "a=T; inc(y,1)"
+
+  let test27 () = 
+    TP.assert_equivalent
+      "(a=T)*"
+      "(a=T;a=T)* + a=T;(a=T;a=T)*"
   
   let tests =
     ["Idempotency1" >:: test0;
@@ -333,7 +338,8 @@ module Unit = struct
      "Product-parsing" >:: test23;
      "Product-action-ordering" >:: test24;
      "Product-population-count" >:: test25;
-     "Product-population-count2" >:: test26]
+     "Product-population-count2" >:: test26;
+     "KAT P* identity" >:: test27]
 
 end;;
 
