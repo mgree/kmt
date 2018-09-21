@@ -31,7 +31,7 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
 
   module P : CollectionType with type t = p = struct
     type t = p
-    let compare = compare
+    let compare = compare_p
     let hash = Hashtbl.hash
     let equal = equal_p
     let show = function
