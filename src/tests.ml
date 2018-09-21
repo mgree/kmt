@@ -291,7 +291,7 @@ module Unit = struct
       "a=T; inc(y,1)"
 
   let test27 () = 
-    TP.assert_equivalent
+    TB.assert_equivalent
       "(a=T)*"
       "(a=T;a=T)* + a=T;(a=T;a=T)*"
   

@@ -207,6 +207,7 @@ let main =
   let _, t4 = Common.time test_count_order () in
   let _, t4' = Common.time test_count_order_norm () in
   let _, t5 = Common.time test_parity_loop () in
+  let _, t5' = Common.time test_parity_loop_norm () in
   let _, t6 = Common.time test_boolean_formula () in
   let _, t6' = Common.time test_boolean_formula_norm () in
   let _, t7 = Common.time test_population_count () in
@@ -216,9 +217,9 @@ let main =
   Printf.printf "count twice                 [time: %f]\n" t3 ;
   Printf.printf "count twice (rewrite)       [time: %f]\n" t3';
   Printf.printf "count order                 [time: %f]\n" t4 ;
-  Printf.printf "count order (rewrite)       [time: %f]\n" t4' ;
+  Printf.printf "count order (rewrite)       [time: %f]\n" t4';
   Printf.printf "parity loop                 [time: %f]\n" t5 ;
-  Printf.printf "parity loop (rewrite)       [time: TO]\n";
+  Printf.printf "parity loop (rewrite)       [time: %f]\n" t5';
   Printf.printf "boolean tree                [time: %f]\n" t6;
   Printf.printf "boolean tree (rewrite)      [time: %f]\n" t6';
   Printf.printf "population count            [time: %f]\n" t7;
