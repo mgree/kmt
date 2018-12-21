@@ -1,0 +1,17 @@
+language: c
+sudo: required
+env:
+  - OCAML_VERSION=4.07
+
+cache:
+  directories:
+    - $HOME/.opam
+
+before_install:
+  - bash -ex .travis-ocaml.sh
+  - opam install ppx_deriving batteries ANSIterminal z3 ocamlbuild
+script:
+  - make
+  - make test
+  - make eval
+
