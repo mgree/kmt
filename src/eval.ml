@@ -197,17 +197,27 @@ let test_population_count_norm () =
   assert eq; 
   ()
 
+(* timeout [in seconds] *)
+let timeout = ref 30
+
 let run_test name tester arg =
-  Printf.printf "%-30s[running...   ]%!" name;
-  let _, t = Common.time tester arg in
-  Printf.printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[time: %7.4f]\n%!" t
+  Printf.printf "%-30srunning...%!" name;
+  let t = Common.timeout !timeout tester arg in
+  Printf.printf "\b\b\b\b\b\b\b\b\b\b   ";
+  begin
+    match t with
+    | Some time -> Printf.printf "%7.4f" time
+    | None -> Printf.printf "%-7s" "timeout"
+  end;
+  Printf.printf "\n%!"
 
 let main =
   let test1 = RA.random_test 10 (fun () -> random_addition_theory 2 3) in
   (* let test2 = RA.random_test 100 (fun () -> random_addition_theory 2 3) in *)
 
-  Printf.printf "%-30s time (seconds)\n" "test";
-  Printf.printf "---------------------------------------------\n%!";
+  Printf.printf "test                      time (seconds)\n";
+  Printf.printf "% 31ds timeout\n%!" !timeout;
+  Printf.printf "----------------------------------------\n%!";
   run_test "a* != a (10)" test_astar_a test1;
   run_test "a* != a (10, rewrite)" test_astar_a_norm test1;
 
@@ -218,8 +228,7 @@ let main =
   run_test "count order (rewrite)" test_count_order_norm ();
 
   run_test "parity loop" test_parity_loop ();
-(*  let _, t5' = Common.time test_parity_loop_norm () in *)
-  Printf.printf "%-30s[time: %7s]\n%!" "parity loop (rewrite)" "TO" (* t5' *);
+  run_test "parity loop (rewrite)" test_parity_loop_norm ();
 
   run_test "boolean tree" test_boolean_formula ();
   run_test "boolean tree (rewrite)" test_boolean_formula_norm ();

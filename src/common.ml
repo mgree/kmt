@@ -130,6 +130,35 @@ let time f x =
   let time = Sys.time () -. t in
   (fx, time)
 
+let timeout limit f x =
+  let (r,w) = Unix.pipe () in
+  let pid = Unix.fork () in
+  if pid = 0
+  then
+    begin
+      (* child *)
+      ignore (Unix.alarm limit);
+      let start = Sys.time () in
+      ignore (Sys.opaque_identity (f x));
+      let finish = Sys.time () in
+      let oc = Unix.out_channel_of_descr w in
+      output_value oc (finish -. start);
+      close_out oc;
+      exit 0
+    end
+  else
+    begin
+      (* parent *)
+      let _,status = Unix.waitpid [] pid in
+      match status with
+      | Unix.WEXITED 0 ->
+         let ic = Unix.in_channel_of_descr r in
+         let time = input_value ic in
+         close_in ic;
+         Some time
+      | _ -> None
+    end
+
 let add_sep sep acc = if acc = "" then acc else sep ^ acc
 
 let show_set f fold set =
