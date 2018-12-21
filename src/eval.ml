@@ -197,31 +197,33 @@ let test_population_count_norm () =
   assert eq; 
   ()
 
+let run_test name tester arg =
+  Printf.printf "%-30s[running...   ]%!" name;
+  let _, t = Common.time tester arg in
+  Printf.printf "\b\b\b\b\b\b\b\b\b\b\b\b\b\b\b[time: %7.4f]\n%!" t
+
 let main =
   let test1 = RA.random_test 10 (fun () -> random_addition_theory 2 3) in
   (* let test2 = RA.random_test 100 (fun () -> random_addition_theory 2 3) in *)
-  let _, t1 = Common.time test_astar_a test1 in
-  let _, t1' = Common.time test_astar_a_norm test1 in
-  let _, t3 = Common.time test_count_twice () in
-  let _, t3' = Common.time test_count_twice_norm () in
-  let _, t4 = Common.time test_count_order () in
-  let _, t4' = Common.time test_count_order_norm () in
-  let _, t5 = Common.time test_parity_loop () in
-  let _, t5' = Common.time test_parity_loop_norm () in
-  let _, t6 = Common.time test_boolean_formula () in
-  let _, t6' = Common.time test_boolean_formula_norm () in
-  let _, t7 = Common.time test_population_count () in
-  let _, t7' = Common.time test_population_count_norm () in
-  Printf.printf "a* != a (10)                [time: %f]\n" t1 ;
-  Printf.printf "a* != a (10, rewrite)       [time: %f]\n" t1';
-  Printf.printf "count twice                 [time: %f]\n" t3 ;
-  Printf.printf "count twice (rewrite)       [time: %f]\n" t3';
-  Printf.printf "count order                 [time: %f]\n" t4 ;
-  Printf.printf "count order (rewrite)       [time: %f]\n" t4';
-  Printf.printf "parity loop                 [time: %f]\n" t5 ;
-  Printf.printf "parity loop (rewrite)       [time: %f]\n" t5';
-  Printf.printf "boolean tree                [time: %f]\n" t6;
-  Printf.printf "boolean tree (rewrite)      [time: %f]\n" t6';
-  Printf.printf "population count            [time: %f]\n" t7;
-  Printf.printf "population count (rewrite)  [time: %f]\n" t7'
+
+  Printf.printf "%-30s time (seconds)\n" "test";
+  Printf.printf "---------------------------------------------\n%!";
+  run_test "a* != a (10)" test_astar_a test1;
+  run_test "a* != a (10, rewrite)" test_astar_a_norm test1;
+
+  run_test "count twice" test_count_twice ();
+  run_test "count twice (rewrite)" test_count_twice_norm ();
+
+  run_test "count order" test_count_order ();
+  run_test "count order (rewrite)" test_count_order_norm ();
+
+  run_test "parity loop" test_parity_loop ();
+(*  let _, t5' = Common.time test_parity_loop_norm () in *)
+  Printf.printf "%-30s[time: %7s]\n%!" "parity loop (rewrite)" "TO" (* t5' *);
+
+  run_test "boolean tree" test_boolean_formula ();
+  run_test "boolean tree (rewrite)" test_boolean_formula_norm ();
+
+  run_test "population count" test_population_count ();
+  run_test "population count (rewrite)" test_population_count_norm ()
 
