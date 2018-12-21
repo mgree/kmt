@@ -8,7 +8,7 @@ cache:
     - $HOME/.opam
 
 before_install:
-  - bash -ex .travis-ocaml.sh
+  - travis_wait bash -ex .travis-ocaml.sh
   - travis_wait opam install -y ppx_deriving
   - travis_wait opam install -y ocamlbuild
   - travis_wait opam install -y batteries 
