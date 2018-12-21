@@ -9,7 +9,7 @@ cache:
 
 before_install:
   - bash -ex .travis-ocaml.sh
-  - opam install ppx_deriving batteries ANSIterminal z3 ocamlbuild
+  - opam install -y ppx_deriving batteries ANSIterminal z3 ocamlbuild
 script:
   - make
   - make test
