@@ -10,7 +10,8 @@ cache:
 before_install:
   - bash -ex .travis-ocaml.sh
   - opam install -y ppx_deriving
-  - opam install -y ocamlbuild ocamlfind
+  - opam install -y ocamlfind 
+  - opam install -y ocamlbuild
   - opam install -y batteries 
   - opam install -y ANSIterminal 
   - travis_wait opam install -y z3 
