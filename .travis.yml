@@ -16,6 +16,7 @@ before_install:
   - opam install -y ANSIterminal 
   - travis_wait opam install -y z3 
   - find $HOME/.opam -name libz3.so
+  - opam config env
 script:
   - opam config exec -- make
   - opam config exec -- make test
