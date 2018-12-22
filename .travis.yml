@@ -14,9 +14,7 @@ before_install:
   - opam install -y ocamlbuild
   - opam install -y batteries 
   - opam install -y ANSIterminal 
-  - travis_wait opam install -y z3 
-  - which z3
-  - find $HOME/.opam -name libz3.so
+  - find $HOME/.opam -name libz3.so; true
 script:
   - opam config exec -- make
   - opam config exec -- make test
