@@ -8,11 +8,11 @@ cache:
     - $HOME/.opam
 
 before_install:
-  - travis_wait bash -ex .travis-ocaml.sh
-  - travis_wait opam install -y ppx_deriving
-  - travis_wait opam install -y ocamlbuild
-  - travis_wait opam install -y batteries 
-  - travis_wait opam install -y ANSIterminal 
+  - bash -ex .travis-ocaml.sh
+  - opam install -y ppx_deriving
+  - opam install -y ocamlbuild ocamlfind
+  - opam install -y batteries 
+  - opam install -y ANSIterminal 
   - travis_wait opam install -y z3 
 script:
   - make
