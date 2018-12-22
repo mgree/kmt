@@ -20,7 +20,7 @@ The code in `src/ltlf.ml` is for a _higher-order theory_, wrapping a given theor
 
 Kleene algebra modulo theories (KMT) is a framework for deriving _concrete_ Kleene algebras with tests (KATs), an algebraic framework for While-like programs with decidable program equivalence.
 
-More plainly: KMT is a framework for building simple programming languages with structure control (if, while, etc.) where you we can decide whether or not two programs are equivalent. You can use equivalence to verify programs (if `a` is a nice property to have after running your program, then if `p;a == p`, you know that `p` satisfies `a`; if `a;p;~b == 0` then all runs starting from `a` either diverge or end with `b`,).
+More plainly: KMT is a framework for building simple programming languages with structured control (if, while, etc.) where you we can decide whether or not two programs are equivalent. You can use equivalence to verify programs. If `a` is a nice property to have after running your program, then if `p;a == p`, you know that `p` satisfies `a`. Kleene algebra with tests subsumes Hoare logic: if `a;p;~b == 0` then all runs starting from `a` either diverge or end with `b`, i.e., that equation corresponds to the partial correctness specification `{a} p {b}`.
 
 # What do I have to provide?
 
