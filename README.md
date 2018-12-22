@@ -1,10 +1,12 @@
+[![Build Status](https://travis-ci.com/mgree/kmt.svg?branch=master)](https://travis-ci.com/mgree/kmt)
+
 An implementation of [Kleene algebra modulo theories](https://arxiv.org/abs/1707.02894) (KMT), a framework for composing and deriving programming languages with sound and complete decision procedures for program equivalence.
 
 # How do I build it?
 
 If you have a recent version of OCaml, simply typing `make` should do the trick---it will call `ocamlbuild` for you. `make eval` will reproduce the evaluation from our paper; `make test` runs regression tests.
 
-You'll need the following OCaml packages: `ppx_deriving`, `batteries`, `ANSIterminal`, and `z3`. The build is via `ocamlbuild`.
+You'll need the following OCaml packages: `ppx_deriving`, `batteries`, `ANSIterminal`, and `z3`. The build is via `ocamlbuild` with `ocamlfind`.
 
 # Which example should I look at first?
 
