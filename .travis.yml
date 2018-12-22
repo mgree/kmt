@@ -14,7 +14,7 @@ before_install:
   - opam install -y ocamlbuild
   - opam install -y batteries 
   - opam install -y ANSIterminal 
-  - sudo apt-get install libz3-dev
+  - sudo apt-get install z3
   - travis_wait opam install -y z3 
 script:
   - opam config exec -- make
