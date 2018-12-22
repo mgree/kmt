@@ -16,7 +16,7 @@ before_install:
   - opam install -y ANSIterminal 
   - travis_wait opam install -y z3 
 script:
-  - make
-  - make test
-  - make eval
+  - opam config exec -- make
+  - opam config exec -- make test
+  - opam config exec -- make eval
 
