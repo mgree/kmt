@@ -44,7 +44,7 @@ let check tests =
   let sizes = List.map (fun (_,sz,_) -> sz) pairs in
   let max_len = (List.fold_left max 0 sizes) + 5 in
   let results = List.map (fun (n,sz,res) -> (n,max_len-sz,res)) pairs in
-  T.print_string [] "=============================\n";
+  T.print_string [] "==========================================\n";
   List.iter (fun (name,spaces,test) -> 
     match run test with 
     | Success ->
@@ -58,7 +58,7 @@ let check tests =
         T.print_string [T.Foreground T.Black] (s1 ^ "\n");
         T.print_string [T.Foreground T.Black] (s2 ^ "\n\n")
   ) results;
-  T.print_string [] "=============================\n"
+  T.print_string [] "==========================================\n"
 
 
 (* Unit tests *)
