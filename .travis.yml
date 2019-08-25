@@ -14,7 +14,7 @@ before_install:
   - opam install -y ocamlbuild
   - opam install -y batteries 
   - opam install -y ANSIterminal 
-  - travis_wait 30 opam install -y z3 
+  - opam install -y -v -v z3 
   - LD_LIBRARY_PATH="$HOME/.opam/ocaml-base-compiler.4.07.1/lib/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
