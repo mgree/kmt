@@ -53,6 +53,8 @@ module type KAT_IMPL = sig
   val seq : Term.t -> Term.t -> Term.t
   val star : Term.t -> Term.t
 
+  (* TODO MMG 2020-02-28 predicates for zero/one testing *)
+    
   (* Utility functions *)
   val subterms : Test.t -> Test.t BatSet.PSet.t
   val test_of_expr : Syntax.expr -> Test.t

@@ -16,6 +16,7 @@ let main =
   let b = K.parse "true" in 
   let eq = D.equivalent a b in *)
   let p = K.parse "x>1; inc(x,1) + y>1; inc(y,1) + inc(z,1)" in
+  (*  let p = K.parse "x>1;inc(x,1) + z>1;inc(z,1)" in *)
   let x = D.normalize_term 0 p in
   let xhat = D.locally_unambiguous_form x in
   Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf xhat)

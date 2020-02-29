@@ -394,11 +394,11 @@ module Decide (T : THEORY) = struct
           if Bits.mem sel i
           then x.(i)
           else let (a,p) = x.(i) in
-               (K.not a, p)
+               (K.not a, K.pred (K.zero ()))
         in
-        go (i+1) (match a.node with
-                  | Zero -> acc (* simple false pruning *)
-                  | _ -> PSet.add clause acc)
+        if a.node = Zero
+        then empty ()
+        else go (i+1) (PSet.add clause acc)
     in
     go 0 (empty ())
     
@@ -413,24 +413,36 @@ module Decide (T : THEORY) = struct
     List.fold_right (fun (disj: nf) (xhat: nf) ->
         let (preds, acts) = List.split (PSet.to_list disj) in
         let a = List.fold_right K.pseq preds (K.one ()) in
-        (* TODO MMG 2020-02-28 prune w/SMT here... necessary for correctness! *)
-        let p = List.fold_right K.par acts (K.pred (K.zero ())) in
-        let clause = (a, p) in
-        PSet.add clause xhat)
+        (* TODO MMG 2020-02-28 
+           if a is semantically contradictory (i.e., unsat) we must drop it here *)
+        if a.node = Zero
+        then xhat
+        else
+          let p = List.fold_right K.par acts (K.pred (K.zero ())) in
+          let clause = (a, p) in
+          match p.node with
+          | Pred pa when pa.node = Zero -> xhat
+          | _ -> PSet.add clause xhat)
       sels (empty ())
 
+  (* x and y should be in locally unambiguous form *)    
+  let globally_unambiguous_form (x:nf) (y:nf)
+      : (K.Test.t * K.Term.t * K.Term.t) array =
+    failwith "TODO"
+    
   let cross (x: nf) (y: nf) : (K.Test.t * K.Term.t * K.Term.t) list =
     PSet.fold
       (fun (test1, term1) acc ->
         PSet.fold
           (fun (test2, term2) acc2 ->
             let a = K.pseq test1 test2 in
-            if a.node = Zero then acc2
-            else if term1.tag = term2.tag then acc2
+            if a.node = Zero
+            then acc2 (* prune when conjunction is false *)
+            else if term1.tag = term2.tag
+            then acc2 (* prune when consequents are identical *)
             else (a, term1, term2) :: acc2 )
           y acc )
       x []
-
 
   (* a/p come from the cross products *)
   let rec reduce (a: K.Test.t) (p: K.Term.t) : K.Term.t =
