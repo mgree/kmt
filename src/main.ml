@@ -25,7 +25,9 @@ let main =
   let yhat = D.locally_unambiguous_form y in
   Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf yhat);
   Printf.printf "q == q via normalization: %b\n" (D.equivalent q q);
-  Printf.printf "p == q via normalization: %b\n" (D.equivalent p q)
+  Printf.printf "p == q via normalization: %b\n" (D.equivalent p q);
+  let r = K.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
+  Printf.printf "q == r via normalization: %b\n" (D.equivalent q r)
   (*  Printf.printf "Equivalent (normalize): %b\n" (eq) *)
 
 (*

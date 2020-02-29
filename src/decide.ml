@@ -413,9 +413,8 @@ module Decide (T : THEORY) = struct
     List.fold_right (fun (disj: nf) (xhat: nf) ->
         let (preds, acts) = List.split (PSet.to_list disj) in
         let a = List.fold_right K.pseq preds (K.one ()) in
-        (* TODO MMG 2020-02-28 
-           if a is semantically contradictory (i.e., unsat) we must drop it here *)
-        if a.node = Zero
+        (* if a is contradictory (i.e., 0 or unsat) we must drop it here *)
+        if a.node = Zero || not (T.satisfiable a)
         then xhat
         else
           let p = List.fold_right K.par acts (K.pred (K.zero ())) in
@@ -453,7 +452,8 @@ module Decide (T : THEORY) = struct
             (fun (a1, p1) acc ->
               PSet.fold (fun (a2, p2) acc2 ->
                   let adots = K.pseq a1 a2 in
-                  if adots.node = Zero (* TODO 2020-02-28 MMG needs semamtic test *)
+                  (* if the conjunction is 0 or unsat, we drop it *)
+                  if adots.node = Zero || not (T.satisfiable adots)
                   then acc2
                   else acc2 && p1.tag = p2.tag) yhat acc)
             xhat true
