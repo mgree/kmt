@@ -139,6 +139,7 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
 
     let merge (p1 : P.t) (p2 : P.t) : P.t = failwith ""
 
+    (* TODO MMG 2020-02-28 we could have a real definition here... *)
     let reduce a p = failwith ""
 
     let variable p = 

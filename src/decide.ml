@@ -358,7 +358,20 @@ module Decide (T : THEORY) = struct
     | PSeq (a, b) -> K.pseq (nnfNeg a) (nnfNeg b)
     | Placeholder _ -> failwith ""
 
+  (* TODO MMG 2020-02-28
 
+     we need to rewrite this code to be in line with our actual
+     completeness procedure.
+
+       1. explosion into disjoint form (local unambiguity)
+          prune impossible cases with SMT?
+       2. cross product (global unambiguity)
+          prune impossible cases with SMT?
+       3. word comparison on like cases
+
+     plan: locally unambiguous forms can just be nf
+           globally unambiguous forms get their own type capturing both sides
+   *)
   let cross (x: nf) (y: nf) : (K.Test.t * K.Term.t * K.Term.t) list =
     PSet.fold
       (fun (test1, term1) acc ->
@@ -372,21 +385,33 @@ module Decide (T : THEORY) = struct
       x []
 
 
+  (* a/p come from the cross products *)
   let rec reduce (a: K.Test.t) (p: K.Term.t) : K.Term.t =
     match a.node with
-    | Zero | Placeholder _ -> failwith ""
+    | Zero -> failwith "unexpected zero in reduce"
+    | Placeholder _ -> failwith "unexpected placeholder in reduce"
     | One -> p
     | PPar (b, c) -> K.par (reduce b p) (reduce c p)
     | PSeq (b, c) -> reduce b (reduce c p)
-    | Not b -> failwith "TODO"
-    | Theory a ->
+    | Not b ->
+       begin match b.node with
+       | Zero -> K.pred (K.one ())
+       | Placeholder _ -> failwith "unexpected (negated) placeholder in reduce"
+       | One -> failwith "unexpected zero (negated one) in reduce"
+       | PPar (b, c) -> reduce (K.pseq (K.not b) (K.not c)) p
+       | PSeq (b, c) -> reduce (K.ppar (K.not b) (K.not c)) p
+       | Theory _ta -> K.seq (K.pred a) p
+       | Not c -> reduce c p
+       end
+    | Theory ta -> 
       match p.node with
       | Action (_, p) -> (
-        match T.reduce a p with None -> K.pred one | Some p -> K.action p )
-      | Pred {node= One} -> p
+        match T.reduce ta p with None -> K.pred one | Some p -> K.action p )
+      | Pred {node= One} -> K.pred a
       | _ -> failwith "TODO"
-
-
+           
+  (* taking advantage of hashconsing to see that they're literally the same KA
+     i.e., word equality is trace equality on actions *)
   let equivalent_ka (a, p, q) =
     let x = reduce a p in
     let y = reduce a q in
@@ -397,19 +422,29 @@ module Decide (T : THEORY) = struct
     let nx = normalize_term 0 x in
     let ny = normalize_term 0 y in
     (* optimization: just if syntactically equal first *)
-    if PSet.equal nx ny then true
+    if PSet.equal nx ny
+    then
+      begin
+        debug (fun () -> Printf.printf "syntactic equality on %s\n" (show_nf nx));
+        true
+      end
     else
-      (* do full equivalence check *)
-      let combined = cross nx ny in
-      match combined with
-      | [] -> true
-      | _ ->
-          List.iter
-            (fun (a, t1, t2) ->
-              Printf.printf "  Need to prove: (%s,%s,%s)\n" (K.Test.show a)
-                (K.Term.show t1) (K.Term.show t2) ;
-              Printf.printf "  or that %s is zero\n" (K.Test.show a) ;
-              Printf.printf "" )
-            combined ;
-          List.map equivalent_ka combined |> List.fold_left ( || ) false
+      begin
+        debug (fun () -> Printf.printf
+                           "running cross product on %s and %s\n"
+                           (show_nf nx) (show_nf ny));
+        (* do full equivalence check *)
+        let combined = cross nx ny in
+        match combined with
+        | [] -> true
+        | _ ->
+           List.iter
+             (fun (a, t1, t2) ->
+               Printf.printf "  Need to prove: (%s,%s,%s)\n" (K.Test.show a)
+                 (K.Term.show t1) (K.Term.show t2) ;
+               Printf.printf "  or that %s is zero\n" (K.Test.show a) ;
+               Printf.printf "" )
+             combined ;
+           List.map equivalent_ka combined |> List.fold_left ( || ) false
+      end
 end
