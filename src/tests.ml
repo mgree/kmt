@@ -13,9 +13,10 @@ type result =
   | Success 
   | Failure of string * string
 
-module Tester(K : KAT_IMPL) = struct 
+module Tester(T : THEORY) = struct
+  module K = T.K
   module A = Automata(K)
-
+           
   let assert_aux b s1 s2 = 
     let x = K.parse s1 in 
     let y = K.parse s2 in 
@@ -49,26 +50,28 @@ let check tests =
     match run test with 
     | Success ->
         T.print_string [] name;
-        T.print_string [] (Common.repeat spaces " ");
-        T.print_string [T.Foreground T.Green] "[Success]\n"
+        T.print_string [] (Common.repeat spaces " "); flush stdout;
+        T.print_string [T.Foreground T.Green] "[Success]\n";
+        flush stdout
     | Failure(s1,s2) -> 
         T.print_string [] name;
-        T.print_string [] (Common.repeat spaces " ");
+        T.print_string [] (Common.repeat spaces " "); flush stdout;
         T.print_string [T.Foreground T.Red] "[Failed]\n\n";
         T.print_string [T.Foreground T.Black] (s1 ^ "\n");
-        T.print_string [T.Foreground T.Black] (s2 ^ "\n\n")
+        T.print_string [T.Foreground T.Black] (s2 ^ "\n\n");
+        flush stdout
   ) results;
-  T.print_string [] "==========================================\n"
+  T.print_string [] "==========================================\n";
 
 
 (* Unit tests *)
 module Unit = struct
   module Prod = Product(Addition)(Boolean)
 
-  module TI = Tester(IncNat.K)              
-  module TA = Tester(Addition.K)
-  module TB = Tester(Boolean.K)
-  module TP = Tester(Prod.K)
+  module TI = Tester(IncNat) 
+  module TA = Tester(Addition)
+  module TB = Tester(Boolean)
+  module TP = Tester(Prod)
 
   let test0 () = 
     TA.assert_equivalent 
