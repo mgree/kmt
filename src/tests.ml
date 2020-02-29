@@ -4,7 +4,8 @@ open Addition
 open Boolean
 open Product
 open Automata
-
+open Decide
+   
 module T = ANSITerminal
 
 exception Violation of string * string
@@ -12,8 +13,8 @@ exception Violation of string * string
 type result = 
   | Success 
   | Failure of string * string
-
-module Tester(T : THEORY) = struct
+             
+module AutomataTester(T : THEORY) = struct
   module K = T.K
   module A = Automata(K)
            
@@ -29,6 +30,22 @@ module Tester(T : THEORY) = struct
   let assert_equivalent = assert_aux true
   let assert_not_equivalent = assert_aux false
 end
+
+module NormalizationTester(T : THEORY) = struct
+  module K = T.K
+  module D = Decide(T)
+           
+  let assert_aux b s1 s2 = 
+    let p = K.parse s1 in 
+    let q = K.parse s2 in 
+    let equiv = D.equivalent p q in
+    if (b && not equiv) || (not b && equiv)  then 
+      raise (Violation (s1,s2))
+
+  let assert_equivalent = assert_aux true
+  let assert_not_equivalent = assert_aux false
+end
+
 
 let (>::) x y = (x,y)
 let (%) f g = fun x -> g (f x)
@@ -46,16 +63,15 @@ let check tests =
   let max_len = (List.fold_left max 0 sizes) + 5 in
   let results = List.map (fun (n,sz,res) -> (n,max_len-sz,res)) pairs in
   T.print_string [] "==========================================\n";
-  List.iter (fun (name,spaces,test) -> 
+  List.iter (fun (name,spaces,test) ->
+    T.print_string [] name;
+    T.print_string [] (Common.repeat spaces " "); flush stdout;
+    flush stdout;
     match run test with 
     | Success ->
-        T.print_string [] name;
-        T.print_string [] (Common.repeat spaces " "); flush stdout;
         T.print_string [T.Foreground T.Green] "[Success]\n";
         flush stdout
     | Failure(s1,s2) -> 
-        T.print_string [] name;
-        T.print_string [] (Common.repeat spaces " "); flush stdout;
         T.print_string [T.Foreground T.Red] "[Failed]\n\n";
         T.print_string [T.Foreground T.Black] (s1 ^ "\n");
         T.print_string [T.Foreground T.Black] (s2 ^ "\n\n");
@@ -68,10 +84,10 @@ let check tests =
 module Unit = struct
   module Prod = Product(Addition)(Boolean)
 
-  module TI = Tester(IncNat) 
-  module TA = Tester(Addition)
-  module TB = Tester(Boolean)
-  module TP = Tester(Prod)
+  module TI = AutomataTester(IncNat) 
+  module TA = AutomataTester(Addition)
+  module TB = AutomataTester(Boolean)
+  module TP = AutomataTester(Prod)
 
   let test0 () = 
     TA.assert_equivalent 
