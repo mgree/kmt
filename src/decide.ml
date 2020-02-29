@@ -385,17 +385,24 @@ module Decide (T : THEORY) = struct
     in
     go [Bits.create n] 0 |> List.filter (fun s -> Bits.count s > 0)
 
-  let array_select (a: 'a array) (n: int) (sel: Bits.t) : 'a PSet.t =
+  let array_select (x: nf_elt array) (n: int) (sel: Bits.t) : nf_elt PSet.t =
     let rec go i acc =
       if i = n
       then acc
-      else if Bits.mem sel i
-      then go (i+1) (PSet.add (Array.get a i) acc)
-      else go (i+1) acc
+      else
+        let (a,_) as clause =
+          if Bits.mem sel i
+          then x.(i)
+          else let (a,p) = x.(i) in
+               (K.not a, p)
+        in
+        go (i+1) (match a.node with
+                  | Zero -> acc (* simple false pruning *)
+                  | _ -> PSet.add clause acc)
     in
     go 0 (empty ())
     
-  let array_selections (a: 'a array) (n: int) (sels: Bits.t list) : ('a PSet.t) list =
+  let array_selections (a: nf_elt array) (n: int) (sels: Bits.t list) : nf list =
     sels |> List.map (array_select a n)
     
   let locally_unambiguous_form (x: nf) : nf =
@@ -406,6 +413,7 @@ module Decide (T : THEORY) = struct
     List.fold_right (fun (disj: nf) (xhat: nf) ->
         let (preds, acts) = List.split (PSet.to_list disj) in
         let a = List.fold_right K.pseq preds (K.one ()) in
+        (* TODO MMG 2020-02-28 prune w/SMT here... necessary for correctness! *)
         let p = List.fold_right K.par acts (K.pred (K.zero ())) in
         let clause = (a, p) in
         PSet.add clause xhat)

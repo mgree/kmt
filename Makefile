@@ -1,7 +1,12 @@
-MLFILES= src/*.ml src/*.mli src/*.mll src/*.mly \
+MLFILES= src/*.ml src/*.mli src/*.mll src/*.mly
 
-build: $(MLFILES)
-	ocamlbuild -use-ocamlfind -r src/main.native
+build: main.native
+
+%.native: $(MLFILES)
+	ocamlbuild -use-ocamlfind -r src/$@
+
+run: build
+	./main.native
 
 test: src/tests.ml 
 	ocamlbuild -use-ocamlfind -r src/tests.native

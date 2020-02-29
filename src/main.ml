@@ -12,10 +12,14 @@ module A = Automata(K)
 module D = Decide(Addition)
 
 let main = 
-  let a = K.parse "(x>1; inc(x,1) + y>1; inc(y,1))*" in 
+(*  let a = K.parse "(x>1; inc(x,1) + y>1; inc(y,1))*" in 
   let b = K.parse "true" in 
-  let eq = D.equivalent a b in
-  Printf.printf "Equivalent (normalize): %b\n" (eq)
+  let eq = D.equivalent a b in *)
+  let p = K.parse "x>1; inc(x,1) + y>1; inc(y,1) + inc(z,1)" in
+  let x = D.normalize_term 0 p in
+  let xhat = D.locally_unambiguous_form x in
+  Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf xhat)
+  (*  Printf.printf "Equivalent (normalize): %b\n" (eq) *)
 
 (*
 let test = ref false
@@ -26,7 +30,7 @@ let usage = "Usage: tkat [options]"
 let params = [
     ("-in", Arg.String (fun s -> in_file := Some s), "Input file name (default stdin)");
     ("-stats", Arg.Unit (fun n -> stats := true), "Output performance statistics as csv to stdout");
-    ("-test", Arg.Unit (fun _ -> test := true), "Runs unit tests" );
+    ("-test", Arg.Unit (fun _o -> test := true), "Runs unit tests" );
   ]
 
 let _ =
