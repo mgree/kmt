@@ -372,6 +372,45 @@ module Decide (T : THEORY) = struct
      plan: locally unambiguous forms can just be nf
            globally unambiguous forms get their own type capturing both sides
    *)
+
+  module Bits = BatBitSet
+                     
+  let all_possible_selections (n: int) : Bits.t list =
+    let rec go ss i =
+      if i = n
+      then ss
+      else let ss_without_i = List.map Bits.copy ss in
+           List.iter (fun s -> Bits.set s i) ss; (* ss_with_i = ss *)
+           go (ss_without_i @ ss) (i+1)
+    in
+    go [Bits.create n] 0 |> List.filter (fun s -> Bits.count s > 0)
+
+  let array_select (a: 'a array) (n: int) (sel: Bits.t) : 'a PSet.t =
+    let rec go i acc =
+      if i = n
+      then acc
+      else if Bits.mem sel i
+      then go (i+1) (PSet.add (Array.get a i) acc)
+      else go (i+1) acc
+    in
+    go 0 (empty ())
+    
+  let array_selections (a: 'a array) (n: int) (sels: Bits.t list) : ('a PSet.t) list =
+    sels |> List.map (array_select a n)
+    
+  let locally_unambiguous_form (x: nf) : nf =
+    let summands  = PSet.to_array x in
+    let n         = Array.length summands in
+    debug (fun () -> Printf.printf "generating %d summands in locally unambiguous form for %s\n" n (show_nf x));
+    let sels      = all_possible_selections n |> array_selections summands n in
+    List.fold_right (fun (disj: nf) (xhat: nf) ->
+        let (preds, acts) = List.split (PSet.to_list disj) in
+        let a = List.fold_right K.pseq preds (K.one ()) in
+        let p = List.fold_right K.par acts (K.pred (K.zero ())) in
+        let clause = (a, p) in
+        PSet.add clause xhat)
+      sels (empty ())
+
   let cross (x: nf) (y: nf) : (K.Test.t * K.Term.t * K.Term.t) list =
     PSet.fold
       (fun (test1, term1) acc ->
