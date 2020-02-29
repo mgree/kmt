@@ -16,10 +16,16 @@ let main =
   let b = K.parse "true" in 
   let eq = D.equivalent a b in *)
   let p = K.parse "x>1; inc(x,1) + y>1; inc(y,1) + inc(z,1)" in
-  (*  let p = K.parse "x>1;inc(x,1) + z>1;inc(z,1)" in *)
   let x = D.normalize_term 0 p in
   let xhat = D.locally_unambiguous_form x in
-  Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf xhat)
+  Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf xhat);
+  Printf.printf "p == p via normalization: %b\n" (D.equivalent p p);
+  let q = K.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
+  let y = D.normalize_term 0 p in
+  let yhat = D.locally_unambiguous_form y in
+  Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf yhat);
+  Printf.printf "q == q via normalization: %b\n" (D.equivalent q q);
+  Printf.printf "p == q via normalization: %b\n" (D.equivalent p q)
   (*  Printf.printf "Equivalent (normalize): %b\n" (eq) *)
 
 (*

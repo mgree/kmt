@@ -425,11 +425,40 @@ module Decide (T : THEORY) = struct
           | _ -> PSet.add clause xhat)
       sels (empty ())
 
-  (* x and y should be in locally unambiguous form *)    
-  let globally_unambiguous_form (x:nf) (y:nf)
-      : (K.Test.t * K.Term.t * K.Term.t) array =
-    failwith "TODO"
-    
+  let equivalent (x: K.Term.t) (y: K.Term.t) : bool =
+    let nx = normalize_term 0 x in
+    let ny = normalize_term 0 y in
+    (* optimization: just if syntactically equal first *)
+    if PSet.equal nx ny
+    then
+      begin
+        debug (fun () -> Printf.printf "syntactic equality on %s\n" (show_nf nx));
+        true
+      end
+    else
+      begin
+        debug (fun () -> Printf.printf
+                           "running cross product on %s and %s\n"
+                           (show_nf nx) (show_nf ny));
+        let xhat = locally_unambiguous_form nx in
+        let yhat = locally_unambiguous_form ny in
+        if PSet.equal xhat yhat
+        then
+          begin
+            debug (fun () -> Printf.printf "syntactic equality on locally unambiguous %s\n" (show_nf xhat));
+            true
+          end
+        else
+          PSet.fold
+            (fun (a1, p1) acc ->
+              PSet.fold (fun (a2, p2) acc2 ->
+                  let adots = K.pseq a1 a2 in
+                  if adots.node = Zero (* TODO 2020-02-28 MMG needs semamtic test *)
+                  then acc2
+                  else acc2 && p1.tag = p2.tag) yhat acc)
+            xhat true
+      end
+        
   let cross (x: nf) (y: nf) : (K.Test.t * K.Term.t * K.Term.t) list =
     PSet.fold
       (fun (test1, term1) acc ->
@@ -477,7 +506,7 @@ module Decide (T : THEORY) = struct
     x.tag = y.tag
 
 
-  let equivalent (x: K.Term.t) (y: K.Term.t) : bool =
+  let equivalent_old (x: K.Term.t) (y: K.Term.t) : bool =
     let nx = normalize_term 0 x in
     let ny = normalize_term 0 y in
     (* optimization: just if syntactically equal first *)
