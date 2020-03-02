@@ -13,7 +13,14 @@ exception Violation of string * string
 type result = 
   | Success 
   | Failure of string * string
-             
+
+module type TESTER =
+  functor (T : THEORY) ->
+  sig
+    val assert_equivalent : string -> string -> unit
+    val assert_not_equivalent : string -> string -> unit
+  end
+ 
 module AutomataTester(T : THEORY) = struct
   module K = T.K
   module A = Automata(K)
@@ -46,7 +53,6 @@ module NormalizationTester(T : THEORY) = struct
   let assert_not_equivalent = assert_aux false
 end
 
-
 let (>::) x y = (x,y)
 let (%) f g = fun x -> g (f x)
 
@@ -56,38 +62,14 @@ let run test =
     Success 
   with Violation(s1,s2) -> Failure(s1,s2) 
 
-
-let check tests =
-  let pairs = List.map (fun (n,test) -> (n, String.length n, test)) tests in
-  let sizes = List.map (fun (_,sz,_) -> sz) pairs in
-  let max_len = (List.fold_left max 0 sizes) + 5 in
-  let results = List.map (fun (n,sz,res) -> (n,max_len-sz,res)) pairs in
-  T.print_string [] "==========================================\n";
-  List.iter (fun (name,spaces,test) ->
-    T.print_string [] name;
-    T.print_string [] (Common.repeat spaces " "); flush stdout;
-    flush stdout;
-    match run test with 
-    | Success ->
-        T.print_string [T.Foreground T.Green] "[Success]\n";
-        flush stdout
-    | Failure(s1,s2) -> 
-        T.print_string [T.Foreground T.Red] "[Failed]\n\n";
-        T.print_string [T.Foreground T.Black] (s1 ^ "\n");
-        T.print_string [T.Foreground T.Black] (s2 ^ "\n\n");
-        flush stdout
-  ) results;
-  T.print_string [] "==========================================\n";
-
-
 (* Unit tests *)
-module Unit = struct
+module Unit (T : TESTER) = struct
   module Prod = Product(Addition)(Boolean)
 
-  module TI = AutomataTester(IncNat) 
-  module TA = AutomataTester(Addition)
-  module TB = AutomataTester(Boolean)
-  module TP = AutomataTester(Prod)
+  module TI = T(IncNat) 
+  module TA = T(Addition)
+  module TB = T(Boolean)
+  module TP = T(Prod)
 
   let test0 () = 
     TA.assert_equivalent 
@@ -360,6 +342,39 @@ module Unit = struct
      "Product-population-count2" >:: test26;
      "KAT P* identity" >:: test27]
 
-end;;
+end
 
-check Unit.tests
+module NormalizeTests = Unit(NormalizationTester)
+module AutomataTests = Unit(AutomataTester)                      
+
+let check tests =
+  let pairs = List.mapi (fun i (n,test) -> (n, String.length (string_of_int i ^ " " ^ n), test)) tests in
+  let sizes = List.map (fun (_,sz,_) -> sz) pairs in
+  let max_len = (List.fold_left max 0 sizes) + 5 in
+  let results = List.map (fun (n,sz,res) -> (n,max_len-sz,res)) pairs in
+  T.print_string [] "==========================================\n";
+  List.iteri (fun i (name,spaces,test) ->
+    T.printf [] "%d %s%s" i name (Common.repeat spaces " "); flush stdout;
+    flush stdout;
+    match run test with 
+    | Success ->
+        T.print_string [T.Foreground T.Green] "[Success]\n";
+        flush stdout
+    | Failure(s1,s2) -> 
+        T.print_string [T.Foreground T.Red] "[Failed]\n\n";
+        T.print_string [T.Foreground T.Black] (s1 ^ "\n");
+        T.print_string [T.Foreground T.Black] (s2 ^ "\n\n");
+        flush stdout
+  ) results;
+  T.print_string [] "==========================================\n"
+                     
+let main () =
+  T.print_string [] "==========================================\n";
+  T.print_string [T.Bold; T.Foreground T.Blue ] "Normalization tests\n";
+  check NormalizeTests.tests;
+  T.print_string [] "==========================================\n";
+  T.print_string [T.Bold; T.Foreground T.Blue ] "Automata tests\n";
+  check AutomataTests.tests
+;;
+
+main ()
