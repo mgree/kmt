@@ -447,6 +447,8 @@ module Decide (T : THEORY) = struct
             debug (fun () -> Printf.printf "syntactic equality on locally unambiguous %s\n" (show_nf xhat));
             true
           end
+        else if PSet.is_empty xhat || PSet.is_empty yhat (* handle emptiness! *)
+        then PSet.is_empty xhat && PSet.is_empty yhat
         else
           PSet.fold
             (fun (a1, p1) acc ->

@@ -7,28 +7,42 @@ open Decide
 open Product
 open Boolean
 
-module K = Addition.K
-module A = Automata(K)
-module D = Decide(Addition)
+module KA = Addition.K
+module AA = Automata(KA)
+module DA = Decide(Addition)
 
-let main = 
-(*  let a = K.parse "(x>1; inc(x,1) + y>1; inc(y,1))*" in 
-  let b = K.parse "true" in 
-  let eq = D.equivalent a b in *)
-  let p = K.parse "x>1; inc(x,1) + y>1; inc(y,1) + inc(z,1)" in
-  let x = D.normalize_term 0 p in
-  let xhat = D.locally_unambiguous_form x in
-  Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf xhat);
-  Printf.printf "p == p via normalization: %b\n" (D.equivalent p p);
-  let q = K.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
-  let y = D.normalize_term 0 p in
-  let yhat = D.locally_unambiguous_form y in
-  Printf.printf "x=%s\n\nx^ = %s\n" (D.show_nf x) (D.show_nf yhat);
-  Printf.printf "q == q via normalization: %b\n" (D.equivalent q q);
-  Printf.printf "p == q via normalization: %b\n" (D.equivalent p q);
-  let r = K.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
-  Printf.printf "q == r via normalization: %b\n" (D.equivalent q r)
-  (*  Printf.printf "Equivalent (normalize): %b\n" (eq) *)
+module KB = Boolean.K
+module AB = Automata(KB)
+module DB = Decide(Boolean)          
+         
+let main =
+  (*
+  let p = KA.parse "x>1; inc(x,1) + y>1; inc(y,1) + inc(z,1)" in
+  let x = DA.normalize_term 0 p in
+  let xhat = DA.locally_unambiguous_form x in
+  Printf.printf "x=%s\n\nx^ = %s\n" (DA.show_nf x) (DA.show_nf xhat);
+  Printf.printf "p == p via normalization: %b\n" (DA.equivalent p p);
+  let q = KA.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
+  let y = DA.normalize_term 0 p in
+  let yhat = DA.locally_unambiguous_form y in
+  Printf.printf "y=%s\n\ny^ = %s\n" (DA.show_nf x) (DA.show_nf yhat);
+  Printf.printf "q == q via normalization: %b\n" (DA.equivalent q q);
+  Printf.printf "p == q via normalization: %b\n" (DA.equivalent p q);
+  let r = KA.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
+  Printf.printf "q == r via normalization: %b\n" (DA.equivalent q r);
+  *)
+  
+  let p = KB.parse "set(x,T)" in
+  let x = DB.normalize_term 0 p in
+  let xhat = DB.locally_unambiguous_form x in
+  Printf.printf "x=%s\n\nx^ = %s\n" (DB.show_nf x) (DB.show_nf xhat);
+
+  let q = KB.parse "set(x,T); x=F" in  
+  let y = DB.normalize_term 0 q in
+  let yhat = DB.locally_unambiguous_form y in
+  Printf.printf "y=%s\n\ny^ = %s\n" (DB.show_nf x) (DB.show_nf yhat);
+
+  Printf.printf "p == q via normalization: %b\n" (DB.equivalent p q)
 
 (*
 let test = ref false
