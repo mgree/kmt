@@ -383,7 +383,7 @@ module Decide (T : THEORY) = struct
            List.iter (fun s -> Bits.set s i) ss; (* ss_with_i = ss *)
            go (ss_without_i @ ss) (i+1)
     in
-    go [Bits.create n] 0 |> List.filter (fun s -> Bits.count s > 0)
+    go [Bits.create n] 0 (* |> List.filter (fun s -> Bits.count s > 0) *)
 
   let array_select (x: nf_elt array) (n: int) (sel: Bits.t) : nf_elt PSet.t =
     let rec go i acc =
@@ -408,10 +408,12 @@ module Decide (T : THEORY) = struct
   let locally_unambiguous_form (x: nf) : nf =
     let summands  = PSet.to_array x in
     let n         = Array.length summands in
-    debug (fun () -> Printf.printf "generating %d summands in locally unambiguous form for %s\n" n (show_nf x));
+    debug (fun () -> Printf.printf "translating %d summands in locally unambiguous form for %s\n" n (show_nf x));
     let sels      = all_possible_selections n |> array_selections summands n in
+    debug (fun () -> Printf.printf "got %d disjunctions\n" (List.length sels));
     List.fold_right (fun (disj: nf) (xhat: nf) ->
         let (preds, acts) = List.split (PSet.to_list disj) in
+(*        debug (fun () -> Printf.printf "disjunction: %s\n" (show_nf disj)); *)
         let a = List.fold_right K.pseq preds (K.one ()) in
         (* if a is contradictory (i.e., 0 or unsat) we must drop it here *)
         if a.node = Zero || not (T.satisfiable a)
@@ -419,9 +421,9 @@ module Decide (T : THEORY) = struct
         else
           let p = List.fold_right K.par acts (K.pred (K.zero ())) in
           let clause = (a, p) in
-          match p.node with
+          (* match p.node with
           | Pred pa when pa.node = Zero -> xhat
-          | _ -> PSet.add clause xhat)
+          | _ -> *) PSet.add clause xhat)
       sels (empty ())
 
   let equivalent (x: K.Term.t) (y: K.Term.t) : bool =
@@ -440,24 +442,40 @@ module Decide (T : THEORY) = struct
                            "running cross product on %s and %s\n"
                            (show_nf nx) (show_nf ny));
         let xhat = locally_unambiguous_form nx in
+        debug (fun () -> Printf.printf "%s is locally unambiguous as %s\n" (show_nf nx) (show_nf xhat));
         let yhat = locally_unambiguous_form ny in
+        debug (fun () -> Printf.printf "%s is locally unambiguous as %s\n" (show_nf ny) (show_nf yhat));
         if PSet.equal xhat yhat
         then
           begin
-            debug (fun () -> Printf.printf "syntactic equality on locally unambiguous %s\n" (show_nf xhat));
+            debug (fun () -> Printf.printf "syntactic equality on locally unambiguous forms\n");
             true
           end
         else if PSet.is_empty xhat || PSet.is_empty yhat (* handle emptiness! *)
-        then PSet.is_empty xhat && PSet.is_empty yhat
+        then 
+          begin
+            debug (fun () -> Printf.printf "empty NF, checking for emptiness of both\n");
+            PSet.is_empty xhat && PSet.is_empty yhat
+          end
         else
           PSet.fold
             (fun (a1, p1) acc ->
               PSet.fold (fun (a2, p2) acc2 ->
                   let adots = K.pseq a1 a2 in
+                  debug (fun () -> Printf.printf "checking adots=%s...%!" (K.Test.show adots));
                   (* if the conjunction is 0 or unsat, we drop it *)
                   if adots.node = Zero || not (T.satisfiable adots)
-                  then acc2
-                  else acc2 && p1.tag = p2.tag) yhat acc)
+                  then 
+                    begin
+                      debug (fun () -> Printf.printf "skipping unsatisfiable case\n");
+                      acc2
+                    end
+                  else 
+                    begin
+                      let same_actions = p1.tag = p2.tag in
+                      debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
+                      acc2 && same_actions
+                    end) yhat acc)
             xhat true
       end
         
