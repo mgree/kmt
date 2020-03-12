@@ -31,12 +31,27 @@ let main =
   let r = KA.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
   Printf.printf "q == r via normalization: %b\n" (DA.equivalent q r);
   *)
+
+  (*
   let p = KB.parse "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)" in
   let x = DB.normalize_term 0 p in
   let xhat = DB.locally_unambiguous_form x in
   Printf.printf "x=%s\n\nx^ = %s\n" (DB.show_nf x) (DB.show_nf xhat);
 
   let q = KB.parse "(x=T; set(y,T) + x=F; set(y,F))" in  
+  let y = DB.normalize_term 0 q in
+  let yhat = DB.locally_unambiguous_form y in
+  Printf.printf "y=%s\n\ny^ = %s\n" (DB.show_nf y) (DB.show_nf yhat);
+
+  Printf.printf "p == q via normalization: %b\n" (DB.equivalent p q)
+  *)
+
+  let p = KB.parse "(a=T)*" in
+  let x = DB.normalize_term 0 p in
+  let xhat = DB.locally_unambiguous_form x in
+  Printf.printf "x=%s\n\nx^ = %s\n" (DB.show_nf x) (DB.show_nf xhat);
+
+  let q = KB.parse "(a=T;a=T)* + a=T;(a=T;a=T)*" in  
   let y = DB.normalize_term 0 q in
   let yhat = DB.locally_unambiguous_form y in
   Printf.printf "y=%s\n\ny^ = %s\n" (DB.show_nf y) (DB.show_nf yhat);

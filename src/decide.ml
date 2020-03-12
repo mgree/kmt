@@ -390,24 +390,20 @@ module Decide (T : THEORY) = struct
           else let (a,p) = x.(i) in
                (K.not a, K.pred (K.zero ()))
         in
-        if a.node = Zero
-        then empty ()
-        else go (i+1) (PSet.add clause acc)
+        (* no pruning here---if a=0, leave it in and we'll clear it up in the locally_unambiguous form *)
+        go (i+1) (PSet.add clause acc)
     in
     go 0 (empty ())
-    
-  let array_selections (a: nf_elt array) (n: int) (sels: Bits.t list) : nf list =
-    sels |> List.map (array_select a n)
     
   let locally_unambiguous_form (x: nf) : nf =
     let summands  = PSet.to_array x in
     let n         = Array.length summands in
     debug (fun () -> Printf.printf "translating %d summands in locally unambiguous form for %s\n" n (show_nf x));
-    let sels      = all_possible_selections n |> array_selections summands n in
+    let sels      = all_possible_selections n |> List.map (array_select summands n) in
     debug (fun () -> Printf.printf "got %d disjunctions\n" (List.length sels));
     List.fold_right (fun (disj: nf) (xhat: nf) ->
         let (preds, acts) = List.split (PSet.to_list disj) in
-(*        debug (fun () -> Printf.printf "disjunction: %s\n" (show_nf disj)); *)
+        debug (fun () -> Printf.printf "disjunction: %s\n" (show_nf disj));
         let a = List.fold_right K.pseq preds (K.one ()) in
         (* if a is contradictory (i.e., 0 or unsat) we must drop it here *)
         if a.node = Zero || not (T.satisfiable a)
