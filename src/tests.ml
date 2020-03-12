@@ -244,7 +244,7 @@ module Unit (T : TESTER) = struct
     "Product-population-count" >::
       TP.assert_equivalent 
         "y<1; (a=F + a=T; inc(y,1)); y > 0"
-        "a=T; inc(y,1)";
+        "y<1; a=T; inc(y,1)";
     "Product-population-count2" >::
       TP.assert_not_equivalent 
         "y<1; (a=F + a=T; inc(y,1))"
