@@ -31,23 +31,6 @@ let main =
   let r = KA.parse "x>1;inc(x,1) + z>1;inc(z,1)" in
   Printf.printf "q == r via normalization: %b\n" (DA.equivalent q r);
   *)
-
-  (* MMG 2020-03-02
-
-     seems like a bug with normal forms:
-
-x={(x=false,y+=false[1])}
-
-x^ = {(x=false,y+=false[1])}
-y={(x=true,y+=true[1]), (x=false,y+=false[1])}
-
-y^ = {(x=false,y+=false[1]), (x=true,y+=true[1])}
-p == q via normalization: true
-
-     push back has killed the case in x where x=true because of 0 cancellation
-
-     but we should KEEP the entries in the NF where the action is 0!
-   *)
   let p = KB.parse "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)" in
   let x = DB.normalize_term 0 p in
   let xhat = DB.locally_unambiguous_form x in
