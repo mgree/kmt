@@ -92,6 +92,10 @@ module Unit (T : TESTER) = struct
        TA.assert_equivalent 
          "inc(x,1)*; x > 2"  
          "x>2 + inc(x,1);inc(x,1)*; x > 2";
+     "Unrolling3" >::
+       TA.assert_equivalent 
+         "inc(x,1)*; x > 2"  
+         "x>2 + inc(x,1)*; x > 2";
      "Postcondition1" >::
        TA.assert_equivalent 
          "inc(x,1); inc(x,1); inc(x,1); x > 2"  
@@ -144,6 +148,10 @@ module Unit (T : TESTER) = struct
        TI.assert_equivalent 
          "inc(x)*; x > 2"  
          "x>2 + inc(x);inc(x)*; x > 2";
+     "Unrolling3 (incnat)" >::
+       TI.assert_equivalent 
+         "inc(x)*; x > 2"  
+         "x>2 + inc(x)*; x > 2";
      "Postcondition1 (incnat)" >::
        TI.assert_equivalent 
          "inc(x); inc(x); inc(x); x > 2"  

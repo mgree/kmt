@@ -6,6 +6,7 @@ open Complete
 open Decide
 open Product
 open Boolean
+open Incnat
 
 module KA = Addition.K
 module AA = Automata(KA)
@@ -14,7 +15,11 @@ module DA = Decide(Addition)
 module KB = Boolean.K
 module AB = Automata(KB)
 module DB = Decide(Boolean)          
-         
+
+module KI = IncNat.K
+module AI = Automata(KI)
+module DI = Decide(IncNat)
+          
 let main =
   (*
   let p = KA.parse "x>1; inc(x,1) + y>1; inc(y,1) + inc(z,1)" in
@@ -45,7 +50,7 @@ let main =
 
   Printf.printf "p == q via normalization: %b\n" (DB.equivalent p q)
   *)
-
+(*
   let p = KB.parse "(a=T)*" in
   let x = DB.normalize_term 0 p in
   let xhat = DB.locally_unambiguous_form x in
@@ -57,7 +62,21 @@ let main =
   Printf.printf "y=%s\n\ny^ = %s\n" (DB.show_nf y) (DB.show_nf yhat);
 
   Printf.printf "p == q via normalization: %b\n" (DB.equivalent p q)
+*)
 
+  let p = KI.parse "inc(x)*; x > 2" in
+  let x = DI.normalize_term 0 p in
+  let xhat = DI.locally_unambiguous_form x in
+  Printf.printf "x=%s\n\nx^ = %s\n\n" (DI.show_nf x) (DI.show_nf xhat);
+
+  let q = KI.parse "x>2 + inc(x);inc(x)*; x > 2" in  
+  let y = DI.normalize_term 0 q in
+  let yhat = DI.locally_unambiguous_form y in
+  Printf.printf "y=%s\n\ny^ = %s\n" (DI.show_nf y) (DI.show_nf yhat);
+
+  Printf.printf "p == q via normalization: %b\n" (DI.equivalent p q)
+
+    
 (*
 let test = ref false
 let stats = ref false
