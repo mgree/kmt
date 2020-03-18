@@ -65,14 +65,16 @@ let main =
 *)
 
   let p = KI.parse "inc(x)*; x > 2" in
+  Printf.printf "p=%s\n~~ nf ~~>\n" (KI.Term.show p);
   let x = DI.normalize_term 0 p in
   let xhat = DI.locally_unambiguous_form x in
-  Printf.printf "x=%s\n\nx^ = %s\n\n" (DI.show_nf x) (DI.show_nf xhat);
+  Printf.printf "x=%s\n~~ locally unambiguous ~~>\nx^ = %s\n\n" (DI.show_nf x) (DI.show_nf xhat);
 
   let q = KI.parse "x>2 + inc(x);inc(x)*; x > 2" in  
+  Printf.printf "q=%s\n~~ nf ~~>\n" (KI.Term.show q);
   let y = DI.normalize_term 0 q in
   let yhat = DI.locally_unambiguous_form y in
-  Printf.printf "y=%s\n\ny^ = %s\n" (DI.show_nf y) (DI.show_nf yhat);
+  Printf.printf "y=%s\n~~ locally unambiguous ~~>\ny^ = %s\n\n" (DI.show_nf y) (DI.show_nf yhat);
 
   Printf.printf "p == q via normalization: %b\n" (DI.equivalent p q)
 
