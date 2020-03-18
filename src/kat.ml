@@ -98,27 +98,55 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
   module A = T.A
   module P = T.P
 
-  let rec show_test a = show_test_hons a.node
- 
-  and show_test_hons a =
-    match a with
+  let rec show_test_sum a = 
+    match a.node with
+    | PPar (a1, a2) -> show_test_sum a1 ^ " + " ^ show_test_sum a2
+    | _ -> show_test_prod a
+         
+  and show_test_prod a =
+    match a.node with
+    | PSeq (a1, a2) -> show_test_prod a1 ^ ";" ^ show_test_prod a2
+    | _ -> show_test_neg a
+         
+  and show_test_neg a =
+    match a.node with
+    | Not a -> "not " ^ show_test_atom a
+    | _ -> show_test_atom a
+         
+  and show_test_atom a =
+    match a.node with
     | Placeholder i -> "placeholder(" ^ string_of_int i ^ ")"
     | Theory t -> T.A.show t
     | Zero -> "false"
     | One -> "true"
-    | Not a -> "not(" ^ show_test a ^ ")"
-    | PPar (a1, a2) -> "(" ^ show_test a1 ^ " + " ^ show_test a2 ^ ")"
-    | PSeq (a1, a2) -> "(" ^ show_test a1 ^ ";" ^ show_test a2 ^ ")"
+    | _ -> "(" ^ show_test_sum a ^ ")"
 
+  let rec show_term_sum p =
+    match p.node with
+    | Par (p1, p2) -> show_term_sum p1 ^ " + " ^ show_term_sum p2
+    | Pred a -> show_test_sum a
+    | _ -> show_term_prod p
 
-  and show_term p =
+  and show_term_prod p =
+    match p.node with
+    | Seq (p1, p2) -> show_term_prod p1 ^ ";" ^ show_term_prod p2
+    | Pred a -> show_test_prod a
+    | _ -> show_term_star p
+         
+  and show_term_star p =
+    match p.node with
+    | Star p1 -> show_term_atom p1 ^ "*"
+    | _ -> show_term_atom p
+         
+  and show_term_atom p =
     match p.node with
     | Action (i, p) -> T.P.show p ^ "[" ^ string_of_int i ^ "]"
-    | Pred a -> show_test a
-    | Par (p1, p2) -> "(" ^ show_term p1 ^ " + " ^ show_term p2 ^ ")"
-    | Seq (p1, p2) -> show_term p1 ^ ";" ^ show_term p2
-    | Star p1 -> "(" ^ show_term p1 ^ ")*"
+    | Pred a -> "(" ^ show_test_atom a ^ ")"
+    | _ -> "(" ^ show_term_sum p ^ ")"
+           
+  let show_test = show_test_sum
 
+  let show_term = show_term_sum
 
   let equal_pred x y =
     match (x, y) with
