@@ -92,17 +92,17 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
 
   let unbounded () = false
 
-  let subterms x = failwith ""
+  let subterms x = failwith "network subterms undefined"
 
   let variable x = get_field x
 
   let variable_test x = get_field x
 
-  let satisfiable x = failwith ""
+  let satisfiable x = failwith "network sat undefined"
 
-  let theory_to_z3_expr a ctx map = failwith ""
+  let theory_to_z3_expr a ctx map = failwith "network theory_to_z3_expr undefined"
   
-  let create_z3_var str ctx solver = failwith ""
+  let create_z3_var str ctx solver = failwith "network create_z3_var undefined"
 
   let simplify_and x y = 
     match x,y with 

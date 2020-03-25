@@ -137,10 +137,10 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
         | Some z -> Some (from_test_right z)
         end
 
-    let merge (p1 : P.t) (p2 : P.t) : P.t = failwith ""
+    let merge (p1 : P.t) (p2 : P.t) : P.t = failwith "product merge undefined"
 
     (* TODO MMG 2020-02-28 we could have a real definition here... *)
-    let reduce a p = failwith ""
+    let reduce a p = failwith "product reduce undefined"
 
     let variable p = 
       match p with 
@@ -181,8 +181,8 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | Right y -> T2.create_z3_var (str,y) ctx solver
 
     let satisfiable (a: K.Test.t) = 
-      if only_left a then T1.satisfiable (to_test_left a (fun _ -> failwith ""))
-      else if only_right a then T2.satisfiable (to_test_right a (fun _ -> failwith ""))
+      if only_left a then T1.satisfiable (to_test_left a (fun _ -> failwith "product sat left error"))
+      else if only_right a then T2.satisfiable (to_test_right a (fun _ -> failwith "product sat right error"))
       else K.z3_satisfiable a
       
   end  

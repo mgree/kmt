@@ -368,7 +368,7 @@ module Decide (T : THEORY) = struct
     | PSeq (a, b) -> K.pseq (nnf a) (nnf b)
     | PPar (a, b) -> K.ppar (nnf a) (nnf b)
     | Not a -> nnfNeg a
-    | Placeholder _ -> failwith ""
+    | Placeholder _ -> failwith "nnf placeholder undefined"
 
 
   and nnfNeg (a: K.Test.t) : K.Test.t =
@@ -379,7 +379,7 @@ module Decide (T : THEORY) = struct
     | Not a -> a
     | PPar (a, b) -> K.ppar (nnfNeg a) (nnfNeg b)
     | PSeq (a, b) -> K.pseq (nnfNeg a) (nnfNeg b)
-    | Placeholder _ -> failwith ""
+    | Placeholder _ -> failwith "nnf placeholder undefined"
 
   (* general outline
 

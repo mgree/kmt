@@ -41,11 +41,11 @@ module CompleteTheoryAux
       | Star a -> K.star (from a)
 
 
-    let satisfiable x = failwith ""
+    let satisfiable x = failwith "complete sat undefined"
 
-    let theory_to_z3_expr a ctx map = failwith ""
+    let theory_to_z3_expr a ctx map = failwith "complete theory_to_z3_expr undefined"
   
-    let create_z3_var str ctx solver = failwith ""
+    let create_z3_var str ctx solver = failwith "complete create_z3_var undefined"
 
     let variable x = ""
 
@@ -59,7 +59,7 @@ module CompleteTheoryAux
 
     let simplify_not x = T.simplify_not x
 
-    let subterms x = failwith ""
+    let subterms x = failwith "complete subterms undefined"
 
     let parse x es =
       match T.parse x es with Left a -> Left a | Right p -> Right (from_p p)
