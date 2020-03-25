@@ -4,6 +4,7 @@ open BatSet
 open Hashcons
 open Common
 open SafeSet
+open Automata
 
 (* Decision procedure based on rewriting via normalization *)
 
@@ -290,8 +291,9 @@ module Decide (T : THEORY) = struct
         let x, y = split a x in
         if PSet.is_empty y then
           if a.node == One then (* some weird optimization? MMG *) begin
-            debug (fun () -> Printf.printf "%sHit a.node = One optimization\n" (spaces i));
-            if K.unbounded () || true then
+              debug (fun () -> Printf.printf "%sHit a.node = One optimization\n" (spaces i));
+            (* MMG 2020-03-25 dropping speculative code for non-tracing semantics *)
+            (*            if K.unbounded () || true then *)
               let term =
                 PSet.fold
                   (fun (test, term) acc -> K.par acc term)
@@ -299,13 +301,13 @@ module Decide (T : THEORY) = struct
                   (K.pred (K.zero ()))
               in
               singleton (a, K.star term)
-            else
+(*            else
               let nf, b, k = fix (i + 1) x in
               let nf_b = repeatSeq (i + 1) x b in
               let nf_k = repeatSeq (i + 1) x k in
               let all = push_back_j (i + 1) nf_b nf_k in
               let all = push_back_j (i + 1) all nf in
-              PSet.add (a, K.pred one) all
+              PSet.add (a, K.pred one) all *)
             end
           else
             let y = push_back_t (i + 1) x a in
@@ -442,12 +444,15 @@ module Decide (T : THEORY) = struct
 
      1. compute alphabets (if different, no way they're equal)
      2. intern each action as a pair of unique id and numeric entry in the alphabet
-     3. generate the automata and run the Hopcroft/Karp union-find algorithm to check equivalence
+     3. generate the automata on the fly, using derivatives
+     4. run the Hopcroft/Karp union-find algorithm to check equivalence
 
    *)
 
   type ra = K.Term.t
-  type alphabet = (int * K.P.t) PSet.t
+  type pi = (int * K.P.t)
+          
+  type alphabet = pi PSet.t
   let empty_alphabet () : alphabet =
     PSet.create
       (fun (i1,pi1) (i2,pi2) ->
@@ -465,21 +470,280 @@ module Decide (T : THEORY) = struct
       | Star n -> loop n sigma
     in
     loop m (empty_alphabet ())
+
+  type letter = { pi: int; label: int }
+
+  let show_letter l = "pi_" ^ string_of_int l.pi ^ " #" ^ string_of_int l.label
+              
+  type word = word_hons hash_consed
+  and word_hons =
+    | Emp
+    | Eps
+    | Ltr of letter
+    | Alt of word * word
+    | Cat of word * word
+    | Str of word
+
+  let equal_word x y =
+    match (x, y) with
+    | Emp, Emp | Eps, Eps -> true
+    | Ltr l1, Ltr l2 -> l1 = l2
+    | Alt (a, b), Alt (c, d) | Cat (a, b), Cat (c, d) ->
+        a.tag = c.tag && b.tag = d.tag
+    | Str a, Str b -> a.tag = b.tag
+    | _, _ -> false
+
+  let hash_word x =
+    match x with
+    | Emp -> 3
+    | Eps -> 5
+    | Ltr l -> 7 * (l.label + (11 * l.pi + 3))
+    | Alt (a, b) -> 13 * (b.hkey + (17 * a.hkey + 19))
+    | Cat (a, b) -> 23 * (b.hkey + (29 * a.hkey + 31))
+    | Str a -> 37 * a.hkey + 41
+           
+  let tbl_word = Hashcons.create 8
+
+  let hashcons_word = Hashcons.hashcons hash_word equal_word tbl_word
+
+  let emp = hashcons_word Emp
+  let eps = hashcons_word Eps
+  let ltr l = hashcons_word (Ltr l)
+  let alt w1 w2 =
+    match w1.node, w2.node with
+    | Emp, _ -> w2
+    | _, Emp -> w1
+    | _, _ -> if w1.tag = w2.tag
+              then w1
+              else hashcons_word (Alt (w1, w2))
+  let cat w1 w2 =
+    match w1.node, w2.node with
+    | Eps, _ -> w2
+    | _, Eps -> w1
+    | _, _ -> hashcons_word (Cat (w1, w2))
+            
+  let str w =
+    match w.node with
+    | Emp -> eps
+    | Eps -> eps
+    | _ -> hashcons_word (Str w)
     
+  module Word : CollectionType with type t = word = struct
+    type t = word
+
+    let equal x y = x.tag = y.tag
+    let compare x y = x.tag - y.tag
+    let hash x = x.hkey
+    let show : t -> string =
+      let rec alt w =
+        match w.node with
+        | Alt (w1, w2) -> alt w1 ^ " + " ^ alt w2
+        | _ -> cat w
+
+      and cat w =
+        match w.node with
+        | Cat (w1, w2) -> cat w1 ^ " + " ^ cat w2
+        | _ -> str w
+
+      and str w =
+        match w.node with
+        | Str w -> atom w ^ "*"
+        | _ -> atom w
+
+      and atom w =
+        match w.node with
+        | Ltr l -> show_letter l
+        | Emp -> "false"
+        | Eps -> "true"
+        | _ -> "(" ^ alt w ^ " )"
+      in
+      alt
+  end
+
+  let word_of (m: ra) (sigma: alphabet) : word =
+    let next_label = ref 0 in
+    let new_label () =
+      let lbl = !next_label in
+      incr next_label;
+      lbl
+    in
+    let tbl = PSet.to_array sigma in
+    let lookup (pi: pi) : int =
+      let rec loop (i: int) : int =
+        if i = Array.length tbl
+        then raise Not_found
+        else if tbl.(i) = pi
+        then i
+        else loop (i + 1)
+      in
+      loop 0
+    in    
+    let rec word_of (m: ra) : word =
+      match m.node with
+      | Action (i, p) -> ltr { pi = lookup (i, p); label = new_label () }
+      | Pred a ->
+         begin match a.node with
+         | Zero -> emp
+         | One -> eps
+         | _ -> failwith ("Unexpected predicate in word: " ^ K.Test.show a)
+         end
+      | Par (n, o) ->
+         let w1 = word_of n in
+         let w2 = word_of o in
+         alt w1 w2
+      | Seq (n, o) ->
+         let w1 = word_of n in
+         let w2 = word_of o in
+         cat w1 w2
+      | Star n ->
+         str (word_of n)
+    in
+    word_of m
+
+  let rec accepting (w: word) : bool =
+    match w.node with
+    | Eps -> true
+    | Str _ -> true
+    | Emp | Ltr _ -> false
+    | Alt (w1, w2) -> accepting w1 || accepting w2
+    | Cat (w1, w2) -> accepting w1 && accepting w2
+
+  let rec derivative (w: word) (l: letter) : word option =
+    match w.node with
+    | Emp -> None
+    | Eps -> None
+    | Ltr l' -> if l.pi = l'.pi then Some eps else None
+    | Alt (w1, w2) ->
+       begin match derivative w1 l, derivative w2 l with
+       | Some w1', Some w2' -> Some (alt w1' w2')
+       | Some w1', None     -> Some w1'
+       | None,     Some w2' -> Some w2'
+       | _, _ -> None
+       end
+    | Cat (w1, w2) ->
+       begin match derivative w1 l, derivative w2 l with
+       | Some w1', Some w2' -> Some (alt (cat w1' w2) (if accepting w1 then w2' else emp))
+       | Some w1', None     -> Some (cat w1' w2)
+       | None,     Some w2' -> if accepting w1 then Some w2' else None
+       | None,     None     -> None
+       end
+    | Str w_inner ->
+       begin match derivative w_inner l with
+       | Some w_inner' -> Some (cat w_inner' w)
+       | None -> None
+       end
+
+  module UF = BatUref
+  module WordMap = Hashtbl.Make(Word)
+  type state = word UF.uref
+
+  let find_state (m: state WordMap.t) (w: word) : state =
+    match WordMap.find_opt m w with
+    | None ->
+       let state = UF.uref w in
+       WordMap.add m w state;
+       state
+    | Some state -> state
+             
+  exception Acceptance_mismatch of word * word
+            
+  let equivalent_words (w1: word) (w2: word) (sigma: alphabet) : bool =
+    let sigma = PSet.to_array sigma in
+    let m : state WordMap.t = WordMap.create 16 in
+    let start1 = find_state m w1 in
+    let start2 = find_state m w2 in
+    UF.unite start1 start2;
+    let rec loop (l: (word * word) list) : bool =
+      match l with
+      | [] -> true (* all done! *)
+      | (w1, w2)::l' ->
+         let rec inner (i: int) : (word * word) list=
+           if i = Array.length sigma
+           then []
+           else begin
+               let c = { pi = Array.(i); label = -1 } in
+               debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
+                                  (Word.show w1) (Word.show w2) (show_letter c));
+               let push =
+                 match derivative w1 c, derivative w2 c with
+                 | None, None -> []
+                 | Some w1c, Some w2c ->
+                    begin
+                      debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
+                                         (Word.show w1) (Word.show w2) (show_letter c));
+
+                      let st1 = find_state m w1c in
+                      let st2 = find_state m w2c in
+                      if accepting w1c <> accepting w2c
+                      then raise (Acceptance_mismatch (w1c, w2c))
+                      else if not (UF.equal st1 st2)
+                      then begin
+                          debug (fun () -> Printf.printf "uniting...\n");                          
+                          UF.unite st1 st2;
+                          [(w1c,w2c)]
+                      end
+                      else []
+                    end
+                 | _, _ -> raise (Acceptance_mismatch (w1, w2))
+               in
+               push @ inner (i+1)
+             end
+         in
+         try
+           let app = inner 0 in
+           debug (fun () -> Printf.printf "added %s\n" (show_list (fun (w1,w2) -> "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")") app));
+           loop (l' @ app)
+         with Acceptance_mismatch (w1, w2) ->
+           begin
+             debug (fun () -> Printf.printf "%s and %s mismatch\n"
+                                (Word.show w1) (Word.show w2));
+             false
+           end
+    in
+    loop [(w1, w2)]
+                    
   let same_actions (m: K.Term.t) (n: K.Term.t) : bool =
     let sigma_m = alphabet_of m in
     let sigma_n = alphabet_of n in
     if PSet.equal sigma_m sigma_n
     then begin
-      let same_actions = m.tag = n.tag in
-      debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
-      same_actions
+        let sigma = sigma_m in
+        let r = word_of m sigma in
+        let s = word_of n sigma in
+        debug (fun () -> Printf.printf "%s ~w~> %s\n" (K.Term.show m) (Word.show r));
+        debug (fun () -> Printf.printf "%s ~w~> %s\n" (K.Term.show n) (Word.show s));
+        if r.tag = s.tag
+        then begin
+            debug (fun () -> Printf.printf "same_tag = true (same tag)\n");
+            true
+          end
+        else begin
+          let same_words = equivalent_words r s sigma in
+          debug (fun () -> Printf.printf "same_words = %b\n" same_words);
+          same_words
+          end
       end
     else begin
-      debug (fun () -> Printf.printf "different alphabets, can't be equal\n");
-      false
+        debug (fun () -> Printf.printf "different alphabets, can't be equal\n");
+        false
       end
 
+  module A = Automata(K)
+    
+  let same_actions_automata (m: K.Term.t) (n: K.Term.t) : bool =
+    if m.tag = n.tag
+    then begin
+        debug (fun () -> Printf.printf "same_action = true (same tag)\n");
+        true
+      end
+    else begin
+        let a1 = A.of_term m in
+        let a2 = A.of_term n in
+        let same_actions = A.equivalent a1 a2 in
+        debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
+        same_actions
+      end
+    
   (* ACTUAL EQUIVALENCE ROUTINE STARTS HERE *)
     
   let equivalent_lanf (xhat: lanf) (yhat: lanf) : bool =
@@ -500,7 +764,7 @@ module Decide (T : THEORY) = struct
         (fun (a1, m1) acc ->
           PSet.fold (fun (a2, m2) acc2 ->
               let adots = K.pseq a1 a2 in
-              debug (fun () -> Printf.printf "checking adots=%s...%!" (K.Test.show adots));
+              debug (fun () -> Printf.printf "checking adots=%s (from %s and %s)...%!" (K.Test.show adots) (K.Test.show a1) (K.Test.show a2));
               (* if the conjunction is 0 or unsat, we drop it *)
               if adots.node = Zero || not (T.satisfiable adots)
               then 
