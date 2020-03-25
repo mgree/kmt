@@ -196,7 +196,8 @@ module Decide (T : THEORY) = struct
       | _, PPar (a, b) ->
           nf_union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) m b)
       | Par (m, n), _ ->
-          nf_union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) n a)
+
+         nf_union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) n a)
       | Star m', _ ->
           let x = push_back_dot (i + 1) m' a in
           let t, u = split a x in
@@ -290,7 +291,7 @@ module Decide (T : THEORY) = struct
         if PSet.is_empty y then
           if a.node == One then (* some weird optimization? MMG *) begin
             debug (fun () -> Printf.printf "%sHit a.node = One optimization\n" (spaces i));
-            if K.unbounded () then
+            if K.unbounded () || true then
               let term =
                 PSet.fold
                   (fun (test, term) acc -> K.par acc term)
@@ -435,6 +436,52 @@ module Decide (T : THEORY) = struct
           | _ -> *) PSet.add clause xhat)
       sels (empty ())
 
+  (* deciding equivalence of restricted actions *)
+
+  (* PLAN: given two words of restricted actions, we need to test regex equality
+
+     1. compute alphabets (if different, no way they're equal)
+     2. intern each action as a pair of unique id and numeric entry in the alphabet
+     3. generate the automata and run the Hopcroft/Karp union-find algorithm to check equivalence
+
+   *)
+
+  type ra = K.Term.t
+  type alphabet = (int * K.P.t) PSet.t
+  let empty_alphabet () : alphabet =
+    PSet.create
+      (fun (i1,pi1) (i2,pi2) ->
+        if i1 = i2
+        then K.P.compare pi1 pi2
+        else Pervasives.compare i1 i2)
+                
+  let alphabet_of (m: ra) : alphabet =
+    let rec loop (m: ra) (sigma: alphabet) : alphabet =
+      match m.node with
+      | Action (i, pi) -> PSet.add (i, pi) sigma
+      | Pred _ -> sigma
+      | Par (n, o) -> loop n (loop o sigma)
+      | Seq (n, o) -> loop n (loop o sigma)
+      | Star n -> loop n sigma
+    in
+    loop m (empty_alphabet ())
+    
+  let same_actions (m: K.Term.t) (n: K.Term.t) : bool =
+    let sigma_m = alphabet_of m in
+    let sigma_n = alphabet_of n in
+    if PSet.equal sigma_m sigma_n
+    then begin
+      let same_actions = m.tag = n.tag in
+      debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
+      same_actions
+      end
+    else begin
+      debug (fun () -> Printf.printf "different alphabets, can't be equal\n");
+      false
+      end
+
+  (* ACTUAL EQUIVALENCE ROUTINE STARTS HERE *)
+    
   let equivalent_lanf (xhat: lanf) (yhat: lanf) : bool =
     if PSet.equal xhat yhat
     then
@@ -450,8 +497,8 @@ module Decide (T : THEORY) = struct
       end
     else
       PSet.fold
-        (fun (a1, p1) acc ->
-          PSet.fold (fun (a2, p2) acc2 ->
+        (fun (a1, m1) acc ->
+          PSet.fold (fun (a2, m2) acc2 ->
               let adots = K.pseq a1 a2 in
               debug (fun () -> Printf.printf "checking adots=%s...%!" (K.Test.show adots));
               (* if the conjunction is 0 or unsat, we drop it *)
@@ -463,9 +510,7 @@ module Decide (T : THEORY) = struct
                 end
               else 
                 begin
-                  let same_actions = p1.tag = p2.tag in
-                  debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
-                  acc2 && same_actions
+                  acc2 && same_actions m1 m2
                 end) yhat acc)
         xhat true
 
@@ -507,5 +552,5 @@ module Decide (T : THEORY) = struct
          end
     in
     List.fold_right add l []
-    
+
 end

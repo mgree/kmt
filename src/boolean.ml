@@ -37,7 +37,7 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     let compare = compare
     let hash = Hashtbl.hash
     let equal = equal_p
-    let show (Assign (x, i)) = x ^ "+=" ^ if i then "T" else "F"
+    let show (Assign (x, i)) = "set(" ^ x ^ "," ^ (if i then "T" else "F") ^ ")"
   end
 
   module A : CollectionType with type t = a = struct
