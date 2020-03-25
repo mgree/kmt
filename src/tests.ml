@@ -237,6 +237,11 @@ module Unit (T : TESTER) = struct
        TB.assert_not_equivalent
          "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)"
          "(x=T; set(y,T) + x=F; set(y,F))";
+     (* taking too long in normalization... *)
+(*     "Boolean-unrolling" >::
+       TB.assert_equivalent
+         "set(x,T)*; x=T"
+         "x=T + set(x,T); set(x,T)*; x=T"; *)
      "Boolean-tree-ordering" >::
        (let s1 = "set(w,F); set(x,T); set(y,F); set(z,F); ((w=T + x=T + y=T + z=T); set(a,T) + (not (w=T + x=T + y=T + z=T)); set(a,F))" in
         let s2 = "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))" in
