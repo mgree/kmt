@@ -37,7 +37,7 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     let compare = compare
     let hash = Hashtbl.hash
     let equal = equal_p
-    let show (Assign (x, i)) = x ^ "+=" ^ string_of_bool i
+    let show (Assign (x, i)) = x ^ "+=" ^ if i then "T" else "F"
   end
 
   module A : CollectionType with type t = a = struct
@@ -45,7 +45,7 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     let compare = compare_a
     let hash = Hashtbl.hash
     let equal = equal_a
-    let show = function Bool (x, v) -> x ^ "=" ^ string_of_bool v
+    let show = function Bool (x, v) -> x ^ "=" ^ if v then "T" else "F"
   end
 
   let variable = get_name_p

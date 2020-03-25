@@ -16,6 +16,9 @@ module Decide (T : THEORY) = struct
 
   type nf = nf_elt PSet.t
 
+  (* locally ambiguous... same type, but useful as documentation *)
+  type lanf = nf
+          
   let compare_test (a: K.Test.t) (b: K.Test.t) = a.tag - b.tag
 
   let compare_nf_elt (a, b) (c, d) =
@@ -103,6 +106,17 @@ module Decide (T : THEORY) = struct
     PSet.map (fun (test, term) -> (K.pseq a test, term)) x
     |> PSet.filter (fun (test, _) -> test.node <> Zero)
 
+  (* nf insert *)
+  (* MMG changing to this everywhere severely slows down Boolean-tree-ordering *)
+  let nf_add ((a,m) : nf_elt) (x: nf) : nf =
+    let (same, rest) = PSet.partition (fun (b, _n) -> a.tag = b.tag) x in
+    let ns = PSet.map snd same in
+    PSet.add (a, PSet.fold K.par ns m) rest
+    
+  (* nf union *)
+  let nf_union (x: nf) (y: nf) : nf =
+    PSet.fold nf_add x y
+    
   let rec normalize (p: K.Term.t) : K.Term.t =
     let nf = normalize_term 0 p in
     debug (fun () -> Printf.printf "Full NF: %s\n" (show_nf nf)) ;
@@ -119,7 +133,7 @@ module Decide (T : THEORY) = struct
     | Action _ -> singleton (one, p)
     | Pred a -> singleton (a, K.pred one)
     | Par (a, b) ->
-        PSet.union (normalize_term (i + 1) a) (normalize_term (i + 1) b)
+        nf_union (normalize_term (i + 1) a) (normalize_term (i + 1) b)
     | Seq (a, b) ->
         push_back_j (i + 1)
           (normalize_term (i + 1) a)
@@ -145,7 +159,7 @@ module Decide (T : THEORY) = struct
               let elts : nf =
                 PSet.filter (fun (test, _) -> test.node <> Zero) elts
               in
-              PSet.union elts acc2 )
+              nf_union elts acc2 )
             y acc )
         x (empty ())
     in
@@ -180,9 +194,9 @@ module Decide (T : THEORY) = struct
           let y = push_back_r (i + 1) m x in
           y
       | _, PPar (a, b) ->
-          PSet.union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) m b)
+          nf_union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) m b)
       | Par (m, n), _ ->
-          PSet.union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) n a)
+          nf_union (push_back_dot (i + 1) m a) (push_back_dot (i + 1) n a)
       | Star m', _ ->
           let x = push_back_dot (i + 1) m' a in
           let t, u = split a x in
@@ -195,7 +209,7 @@ module Decide (T : THEORY) = struct
             let y = push_back_star (i + 1) t in
             let z = push_back_j (i + 1) x y in
             let y = stitch a y in
-            PSet.union y z
+            nf_union y z
       | _, Placeholder _ -> failwith "impossible"
       | Pred b, _ -> singleton (K.pseq b a, K.pred one)
     in
@@ -212,7 +226,7 @@ module Decide (T : THEORY) = struct
         (fun (test, term) acc ->
           let elts = push_back_dot (i + 1) term a in
           let elts : nf = PSet.map (fun (b, m') -> (K.pseq test b, m')) elts in
-          PSet.union elts acc )
+          nf_union elts acc )
         x (empty ())
     in
     debug (fun () -> Printf.printf "%sresult: %s\n" (spaces i) (show_nf ret)) ;
@@ -223,12 +237,15 @@ module Decide (T : THEORY) = struct
     debug (fun () ->
         Printf.printf "%spush_back_t: %s and %s\n" (spaces i) (K.Term.show m)
           (show_nf x) ) ;
-    PSet.fold
+    let ret = PSet.fold
       (fun (test, term) acc ->
         let elts : nf = push_back_dot (i + 1) m test in
         let elts : nf = PSet.map (fun (a, p) -> (a, K.seq p term)) elts in
-        PSet.union elts acc )
+        nf_union elts acc )
       x (empty ())
+    in
+    debug (fun () -> Printf.printf "%sresult: %s\n" (spaces i) (show_nf ret)) ;
+    ret
 
   (* and push_back_star_opt (i : int) (x : nf) : nf =
     debug (fun () -> Printf.printf "%spush_back_star_opt: %s\n" (spaces i) (show_nf x) ) ;
@@ -265,13 +282,14 @@ module Decide (T : THEORY) = struct
   and push_back_star (i: int) (x: nf) : nf =
     debug (fun () -> Printf.printf "%spush_back_star: %s\n" (spaces i) (show_nf x) ) ;
     let ret =
-      if PSet.is_empty x then singleton (one, K.pred one)
+      if PSet.is_empty x then singleton (one, K.pred one) (* StarZero *)
       else
         let a = pick_mt x in
         debug (fun () -> Printf.printf "%sMaximal test:%s\n" (spaces i) (K.Test.show a) ) ;
         let x, y = split a x in
         if PSet.is_empty y then
-          if a.node == One then
+          if a.node == One then (* some weird optimization? MMG *) begin
+            debug (fun () -> Printf.printf "%sHit a.node = One optimization\n" (spaces i));
             if K.unbounded () then
               let term =
                 PSet.fold
@@ -287,23 +305,24 @@ module Decide (T : THEORY) = struct
               let all = push_back_j (i + 1) nf_b nf_k in
               let all = push_back_j (i + 1) all nf in
               PSet.add (a, K.pred one) all
+            end
           else
             let y = push_back_t (i + 1) x a in
             let t, u = split a y in
             match PSet.is_empty t with
-            | true ->
+            | true -> (* Slide *)
                 let y = u in
                 let y' = push_back_star (i + 1) y in
                 let z = push_back_j (i + 1) y' x in
                 let z = stitch a z in
                 PSet.add (one, K.pred one) z
-            | false ->
+            | false -> (* Denest *)
                 let x' = y in
                 let t, u = split a x' in
-                let y = push_back_star (i + 1) (PSet.union t u) in
+                let y = push_back_star (i + 1) (nf_union t u) in
                 let z = push_back_j (i + 1) y x in
                 PSet.add (one, K.pred one) (stitch a z)
-        else
+        else (* Denest *)
           let y' = push_back_star (i + 1) y in
           let x' = push_back_j (i + 1) x y' in
           let z = push_back_star (i + 1) (stitch a x') in
@@ -332,7 +351,7 @@ module Decide (T : THEORY) = struct
     let acc : nf ref = xs in
     for j = 1 to count do
       xs := push_back_j i !xs x ;
-      acc := PSet.union !xs !acc
+      acc := nf_union !xs !acc
     done ;
     !acc
 
@@ -395,7 +414,7 @@ module Decide (T : THEORY) = struct
     in
     go 0 (empty ())
     
-  let locally_unambiguous_form (x: nf) : nf =
+  let locally_unambiguous_form (x: nf) : lanf =
     let summands  = PSet.to_array x in
     let n         = Array.length summands in
     debug (fun () -> Printf.printf "translating %d summands in locally unambiguous form for %s\n" n (show_nf x));
@@ -416,9 +435,41 @@ module Decide (T : THEORY) = struct
           | _ -> *) PSet.add clause xhat)
       sels (empty ())
 
-  let equivalent (x: K.Term.t) (y: K.Term.t) : bool =
-    let nx = normalize_term 0 x in
-    let ny = normalize_term 0 y in
+  let equivalent_lanf (xhat: lanf) (yhat: lanf) : bool =
+    if PSet.equal xhat yhat
+    then
+      begin
+        debug (fun () -> Printf.printf "syntactic equality on locally unambiguous forms\n");
+        true
+      end
+    else if PSet.is_empty xhat || PSet.is_empty yhat (* handle emptiness! *)
+    then 
+      begin
+        debug (fun () -> Printf.printf "empty NF, checking for emptiness of both\n");
+        PSet.is_empty xhat && PSet.is_empty yhat
+      end
+    else
+      PSet.fold
+        (fun (a1, p1) acc ->
+          PSet.fold (fun (a2, p2) acc2 ->
+              let adots = K.pseq a1 a2 in
+              debug (fun () -> Printf.printf "checking adots=%s...%!" (K.Test.show adots));
+              (* if the conjunction is 0 or unsat, we drop it *)
+              if adots.node = Zero || not (T.satisfiable adots)
+              then 
+                begin
+                  debug (fun () -> Printf.printf "skipping unsatisfiable case\n");
+                  acc2
+                end
+              else 
+                begin
+                  let same_actions = p1.tag = p2.tag in
+                  debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
+                  acc2 && same_actions
+                end) yhat acc)
+        xhat true
+
+  let equivalent_nf (nx: nf) (ny: nf) : bool =
     (* optimization: just if syntactically equal first *)
     if PSet.equal nx ny
     then
@@ -426,8 +477,7 @@ module Decide (T : THEORY) = struct
         debug (fun () -> Printf.printf "syntactic equality on %s\n" (show_nf nx));
         true
       end
-    else
-      begin
+    else begin
         debug (fun () -> Printf.printf
                            "running cross product on %s and %s\n"
                            (show_nf nx) (show_nf ny));
@@ -435,37 +485,27 @@ module Decide (T : THEORY) = struct
         debug (fun () -> Printf.printf "%s is locally unambiguous as %s\n" (show_nf nx) (show_nf xhat));
         let yhat = locally_unambiguous_form ny in
         debug (fun () -> Printf.printf "%s is locally unambiguous as %s\n" (show_nf ny) (show_nf yhat));
-        if PSet.equal xhat yhat
-        then
-          begin
-            debug (fun () -> Printf.printf "syntactic equality on locally unambiguous forms\n");
-            true
-          end
-        else if PSet.is_empty xhat || PSet.is_empty yhat (* handle emptiness! *)
-        then 
-          begin
-            debug (fun () -> Printf.printf "empty NF, checking for emptiness of both\n");
-            PSet.is_empty xhat && PSet.is_empty yhat
-          end
-        else
-          PSet.fold
-            (fun (a1, p1) acc ->
-              PSet.fold (fun (a2, p2) acc2 ->
-                  let adots = K.pseq a1 a2 in
-                  debug (fun () -> Printf.printf "checking adots=%s...%!" (K.Test.show adots));
-                  (* if the conjunction is 0 or unsat, we drop it *)
-                  if adots.node = Zero || not (T.satisfiable adots)
-                  then 
-                    begin
-                      debug (fun () -> Printf.printf "skipping unsatisfiable case\n");
-                      acc2
-                    end
-                  else 
-                    begin
-                      let same_actions = p1.tag = p2.tag in
-                      debug (fun () -> Printf.printf "same_actions = %b\n" same_actions);
-                      acc2 && same_actions
-                    end) yhat acc)
-            xhat true
+        equivalent_lanf xhat yhat
       end
+    
+  let equivalent (p: K.Term.t) (q: K.Term.t) : bool =
+    let nx = normalize_term 0 p in
+    let ny = normalize_term 0 q in
+    equivalent_nf nx ny
+
+  let equivalence_classes_lanf (l: lanf list) : (lanf list) list =
+    let rec add (x: lanf) (eqs: (lanf list) list) : (lanf list) list =
+      match eqs with
+      | [] -> [[x]]
+      | cls::eqs ->
+         begin match cls with
+         | [] -> add x eqs (* should never happen *)
+         | (rep::_) ->
+            if equivalent_lanf x rep
+            then (x::cls)::eqs
+            else cls::add x eqs
+         end
+    in
+    List.fold_right add l []
+    
 end
