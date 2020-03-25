@@ -473,12 +473,6 @@ module Decide (T : THEORY) = struct
     loop m (empty_alphabet ())
 
   let word_of (m: ra) (sigma: alphabet) : word =
-    let next_label = ref 0 in
-    let new_label () =
-      let lbl = !next_label in
-      incr next_label;
-      lbl
-    in
     let tbl = PSet.to_array sigma in
     let lookup (pi: pi) : int =
       let rec loop (i: int) : int =
@@ -492,23 +486,16 @@ module Decide (T : THEORY) = struct
     in    
     let rec word_of (m: ra) : word =
       match m.node with
-      | Action (i, p) -> ltr { pi = lookup (i, p); label = new_label () }
+      | Action (i, p) -> ltr (lookup (i, p))
       | Pred a ->
          begin match a.node with
          | Zero -> emp
          | One -> eps
          | _ -> failwith ("Unexpected predicate in word: " ^ K.Test.show a)
          end
-      | Par (n, o) ->
-         let w1 = word_of n in
-         let w2 = word_of o in
-         alt w1 w2
-      | Seq (n, o) ->
-         let w1 = word_of n in
-         let w2 = word_of o in
-         cat w1 w2
-      | Star n ->
-         str (word_of n)
+      | Par (n, o) -> alt (word_of n) (word_of o)
+      | Seq (n, o) -> cat (word_of n) (word_of o)
+      | Star n -> str (word_of n)
     in
     word_of m
                     

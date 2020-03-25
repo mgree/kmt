@@ -2,9 +2,9 @@ open BatSet
 open Hashcons
 open Common
 
-type letter = { pi: int; label: int }
-
-let show_letter l = "pi_" ^ string_of_int l.pi ^ " #" ^ string_of_int l.label
+type letter = int
+            
+let show_letter l = "pi_" ^ string_of_int l
             
 type word = word_hons hash_consed
 and word_hons =
@@ -28,7 +28,7 @@ let hash_word x =
   match x with
   | Emp -> 3
   | Eps -> 5
-  | Ltr l -> 7 * (l.label + (11 * l.pi + 3))
+  | Ltr l -> 7 * l + 3
   | Alt (a, b) -> 13 * (b.hkey + (17 * a.hkey + 19))
   | Cat (a, b) -> 23 * (b.hkey + (29 * a.hkey + 31))
   | Str a -> 37 * a.hkey + 41
@@ -103,7 +103,7 @@ let rec derivative (w: word) (l: letter) : word option =
   match w.node with
   | Emp -> None
   | Eps -> None
-  | Ltr l' -> if l.pi = l'.pi then Some eps else None
+  | Ltr l' -> if l = l' then Some eps else None
   | Alt (w1, w2) ->
      begin match derivative w1 l, derivative w2 l with
      | Some w1', Some w2' -> Some (alt w1' w2')
@@ -147,11 +147,10 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
     match l with
     | [] -> true (* all done! *)
     | (w1, w2)::l' ->
-       let rec inner (i: int) : (word * word) list=
-         if i = sigma
+       let rec inner (c: int) : (word * word) list=
+         if c = sigma
          then []
          else begin
-             let c = { pi = i; label = -1 } in
              debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
                                 (Word.show w1) (Word.show w2) (show_letter c));
              let push =
@@ -176,12 +175,15 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
                   end
                | _, _ -> raise (Acceptance_mismatch (w1, w2))
              in
-             push @ inner (i+1)
+             push @ inner (c+1)
            end
        in
        try
          let app = inner 0 in
-         debug (fun () -> Printf.printf "added %s\n" (show_list (fun (w1,w2) -> "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")") app));
+         debug (fun () -> Printf.printf "added %s\n"
+                            (show_list (fun (w1,w2) ->
+                                 "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")")
+                               app));
          loop (l' @ app)
        with Acceptance_mismatch (w1, w2) ->
          begin
