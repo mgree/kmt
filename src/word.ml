@@ -99,30 +99,15 @@ let rec accepting (w: word) : bool =
   | Alt (w1, w2) -> accepting w1 || accepting w2
   | Cat (w1, w2) -> accepting w1 && accepting w2
 
-let rec derivative (w: word) (l: letter) : word option =
+let rec derivative (w: word) (l: letter) : word =
   match w.node with
-  | Emp -> None
-  | Eps -> None
-  | Ltr l' -> if l = l' then Some eps else None
-  | Alt (w1, w2) ->
-     begin match derivative w1 l, derivative w2 l with
-     | Some w1', Some w2' -> Some (alt w1' w2')
-     | Some w1', None     -> Some w1'
-     | None,     Some w2' -> Some w2'
-     | _, _ -> None
-     end
+  | Emp -> emp
+  | Eps -> emp
+  | Ltr l' -> if l = l' then eps else emp
+  | Alt (w1, w2) -> alt (derivative w1 l) (derivative w2 l)
   | Cat (w1, w2) ->
-     begin match derivative w1 l, derivative w2 l with
-     | Some w1', Some w2' -> Some (alt (cat w1' w2) (if accepting w1 then w2' else emp))
-     | Some w1', None     -> Some (cat w1' w2)
-     | None,     Some w2' -> if accepting w1 then Some w2' else None
-     | None,     None     -> None
-     end
-  | Str w_inner ->
-     begin match derivative w_inner l with
-     | Some w_inner' -> Some (cat w_inner' w)
-     | None -> None
-     end
+     alt (cat (derivative w1 l) w2) (if accepting w1 then (derivative w2 l) else emp)
+  | Str w_inner -> cat (derivative w_inner l) w
 
 module UF = BatUref
 module WordMap = Hashtbl.Make(Word)
@@ -153,29 +138,24 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
          else begin
              debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
                                 (Word.show w1) (Word.show w2) (show_letter c));
+             let w1c = derivative w1 c in
+             let w2c = derivative w2 c in
+             debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
+                                (Word.show w1) (Word.show w2) (show_letter c));
+             let st1 = find_state m w1c in
+             let st2 = find_state m w2c in
              let push =
-               match derivative w1 c, derivative w2 c with
-               | None, None -> []
-               | Some w1c, Some w2c ->
-                  begin
-                    debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
-                                       (Word.show w1) (Word.show w2) (show_letter c));
-
-                    let st1 = find_state m w1c in
-                    let st2 = find_state m w2c in
-                    if accepting w1c <> accepting w2c
-                    then raise (Acceptance_mismatch (w1c, w2c))
-                    else if not (UF.equal st1 st2)
-                    then begin
-                        debug (fun () -> Printf.printf "uniting...\n");                          
-                        UF.unite st1 st2;
-                        [(w1c,w2c)]
-                    end
-                    else []
-                  end
-               | _, _ -> raise (Acceptance_mismatch (w1, w2))
-             in
-             push @ inner (c+1)
+               if accepting w1c <> accepting w2c
+               then raise (Acceptance_mismatch (w1c, w2c))
+               else if not (UF.equal st1 st2)
+               then begin
+                   debug (fun () -> Printf.printf "uniting...\n");                          
+                   UF.unite st1 st2;
+                   [(w1c,w2c)]
+                 end
+               else []
+               in
+               push @ inner (c+1)
            end
        in
        try
