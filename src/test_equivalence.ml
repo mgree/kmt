@@ -1,3 +1,4 @@
+open Common
 open Kat
 open Incnat
 open Addition
@@ -220,13 +221,24 @@ module TestBoolean (T : TESTER) = struct
          "x=T + set(x,T); set(x,T)*; x=T";
       assert_equivalent "kat p* identity"
         "(a=T)*"
-        "(a=T;a=T)* + a=T;(a=T;a=T)*"      
+        "(a=T;a=T)* + a=T;(a=T;a=T)*";
+      assert_equivalent "toggle star"
+        "(set(x,T) + set(y,T) + set(x,F) + set(y,T))*"
+        "(set(x,F) + set(y,T) + set(x,T) + set(y,T))*"
     ] @ (if mode = Automata
          then []
          else [ assert_equivalent "tree ordering"
                   "set(w,F); set(x,T); set(y,F); set(z,F); ((w=T + x=T + y=T + z=T); set(a,T) + (not (w=T + x=T + y=T + z=T)); set(a,F))"
                   "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))"
            ])
+
+  let denesting_tests =
+    ["x=F;set(x,T)"; "y=F;set(y,T)"; "x=T;set(x,F)"; "y=T;set(y,F)"]
+    |> permutations
+    |> List.map (List.fold_left (fun acc e -> e ^ add_sep " + " acc) "")
+    |> List.map (fun inner -> "(" ^ inner ^ ")*")
+    |> all_pairs
+    |> List.map (fun (lhs, rhs) -> assert_equivalent (lhs ^ " = " ^ rhs) lhs rhs)
 end
 
 module TestProduct (T : TESTER) = struct
@@ -280,6 +292,10 @@ let main () =
     ; "incnat automata", TestIncNatAutomata.tests
     ; "boolean automata", TestBooleanAutomata.tests
     ; "product automata", TestProductAutomata.tests
+    ; "denesting normalization",
+      TestBooleanNormalization.denesting_tests
+    ; "denesting automata",
+      TestBooleanAutomata.denesting_tests
     ]
 ;;
 

@@ -1,3 +1,4 @@
+open Common
 open Word
 open Alcotest
 
@@ -20,16 +21,6 @@ let small_words = [
   ; ltr 2
   ]
 
-let rec concat_map (f: 'a -> 'b list) (l: 'a list) : 'b list =
-  match l with
-  | [] -> []
-  | (a::l') -> f a @ concat_map f l'
-          
-let cartesian_product (l1: 'a list) (l2: 'b list) : ('a * 'b) list =
-  concat_map (fun a -> List.map (fun b -> (a,b)) l2) l1
-
-let uncurry (f: 'a -> 'b -> 'c) ((a, b): 'a * 'b) : 'c = f a b
-  
 let alts (ws: word list) = cartesian_product ws ws |> List.map (uncurry alt)
 let cats (ws: word list) = cartesian_product ws ws |> List.map (uncurry cat)
 let strs (ws: word list) = ws |> List.map str 

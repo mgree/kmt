@@ -4,6 +4,8 @@
 (*                                                                 *)
 (*******************************************************************)
 
+let uncurry (f: 'a -> 'b -> 'c) ((a, b): 'a * 'b) : 'c = f a b
+
 module type CollectionType = sig
   type t
   val equal : t -> t -> bool
@@ -105,6 +107,27 @@ module Memoize (A : CollectionType) = struct
     aux
 end
 
+let rec concat_map (f: 'a -> 'b list) (l: 'a list) : 'b list =
+  match l with
+  | [] -> []
+  | (a::l') -> f a @ concat_map f l'
+
+let rec insert_everywhere (x: 'a) (l: 'a list) : ('a list) list =
+  match l with
+  | [] -> [[x]]
+  | y::l' -> (x::l) :: List.map (fun l'' -> y::l'') (insert_everywhere x l')
+           
+let rec permutations l =
+  match l with
+  | [] -> [[]]
+  | x::l' -> concat_map (insert_everywhere x) (permutations l')
+             
+let cartesian_product (l1: 'a list) (l2: 'b list) : ('a * 'b) list =
+  concat_map (fun a -> List.map (fun b -> (a,b)) l2) l1
+  
+let all_pairs (l: 'a list) : ('a * 'a) list =
+  cartesian_product l l
+  
 let cross_product x y base f =
   BatSet.PSet.fold
     (fun a' acc1 ->
