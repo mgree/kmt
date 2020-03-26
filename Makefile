@@ -1,13 +1,19 @@
-MLFILES= src/*.ml src/*.mli src/*.mll src/*.mly
+MLFILES=src/*.ml src/*.mli src/*.mll src/*.mly
 
 build: main.native
 
 run: build
 	./main.native
 
-test: src/test_equivalence.ml 
+test: test_equivalence test_word
+
+test_equivalence : src/test_equivalence.ml
 	$(MAKE) test_equivalence.native
 	./test_equivalence.native
+
+test_word : src/test_word.ml
+	$(MAKE) test_word.native
+	./test_word.native
 
 eval: src/eval.ml
 	$(MAKE) eval.native
@@ -20,4 +26,4 @@ clean:
 	ocamlbuild -clean
 	rm -f bin/*.native
 
-.PHONY: build clean
+.PHONY: build run test test_equivalence test_word clean

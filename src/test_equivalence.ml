@@ -33,7 +33,7 @@ module AutomataTester(T : THEORY) = struct
 
   let mode = Automata
          
-  let pp fmt x = Fmt.pf fmt "%s" x
+  let pp = Fmt.string
          
   let equal s1 s2 =          
     let x = K.parse s1 in 
@@ -58,7 +58,7 @@ module NormalizationTester(T : THEORY) = struct
 
   let mode = Normalization
 
-  let pp fmt x = Fmt.pf fmt "%s" x
+  let pp = Fmt.string
 
   let equal s1 s2 =         
     let p = K.parse s1 in 
@@ -271,8 +271,7 @@ module TestProductNormalization = TestProduct(NormalizationTester)
 module TestProductAutomata = TestProduct(AutomataTester)
                            
 let main () =
-  let open Alcotest in
-  run "equivalence" [
+  Alcotest.run "equivalence" [
       "addition normalization", TestAdditionNormalization.tests
     ; "incnat normalization", TestIncNatNormalization.tests
     ; "boolean normalization", TestBooleanNormalization.tests

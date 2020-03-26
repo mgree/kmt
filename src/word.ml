@@ -2,6 +2,8 @@ open BatSet
 open Hashcons
 open Common
 
+(* TODO parse words *)
+   
 type letter = int
             
 let show_letter l = "pi_" ^ string_of_int l
@@ -91,6 +93,13 @@ module Word : CollectionType with type t = word = struct
     alt
 end
 
+let rec num_letters (w: word) : int =
+  match w.node with
+  | Eps | Emp -> 0
+  | Ltr i -> i
+  | Alt (w1, w2) | Cat (w1, w2) -> max (num_letters w1) (num_letters w2)
+  | Str w -> num_letters w 
+                                                
 let rec accepting (w: word) : bool =
   match w.node with
   | Eps -> true
