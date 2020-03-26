@@ -2,4 +2,5 @@
 - Use a real logging framework
   + Make bits of logging configurable
 - bool.ml-esque frontends for other modes
-- Add tests that use frontends (much lower barrier to entry!)
+  + Test frontends
+- Use Fmt for better pretty printing
