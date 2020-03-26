@@ -275,7 +275,7 @@ module TestProductAutomata = TestProduct(AutomataTester)
                            
 let main () =
   let open Alcotest in
-  run ~show_errors:true "equivalence" [
+  run "equivalence" [
       "addition normalization", TestAdditionNormalization.tests
     ; "incnat normalization", TestIncNatNormalization.tests
     ; "boolean normalization", TestBooleanNormalization.tests
