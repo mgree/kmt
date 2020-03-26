@@ -203,13 +203,12 @@ module TestBoolean (T : TESTER) = struct
       assert_equivalent "Boolean-assign-eq2"
          "set(x,T); set(x,F); x=F"
          "set(x,T); set(x,F)";
-     (* taking too long in normalization... *)     
-(*      assert_equivalent  "Boolean-parity-loop"
-         "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*"
-         "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=F";
-         assert_not_equivalent "Boolean-parity-loop2"
-         "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*"
-         "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=T"; *)
+      assert_equivalent  "Boolean-parity-loop"
+        "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*"
+        "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=F";
+      assert_not_equivalent "Boolean-parity-loop2"
+        "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*"
+        "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=T";
       assert_equivalent "Boolean-finiteness"
          "x=F + x=T"
          "true";
@@ -222,10 +221,9 @@ module TestBoolean (T : TESTER) = struct
       assert_not_equivalent "Boolean-multiple-vars2"
          "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)"
          "(x=T; set(y,T) + x=F; set(y,F))";
-     (* taking too long in normalization... *)
-     (* assert_equivalent "Boolean-unrolling"
+      assert_equivalent "Boolean-unrolling"
          "set(x,T)*; x=T"
-         "x=T + set(x,T); set(x,T)*; x=T"; *)
+         "x=T + set(x,T); set(x,T)*; x=T";
       assert_equivalent "Boolean-tree-ordering"
         "set(w,F); set(x,T); set(y,F); set(z,F); ((w=T + x=T + y=T + z=T); set(a,T) + (not (w=T + x=T + y=T + z=T)); set(a,F))"
         "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))";
