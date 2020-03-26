@@ -1,7 +1,6 @@
 - Use a real logging framework
   + Make bits of logging configurable
-- bool.ml-esque frontends for other modes
-  + Test frontends
+- Test frontends
 - Use Fmt for better pretty printing
 - Switch to dune-based build?
 - Break off word stuff as a separate library?
