@@ -253,7 +253,10 @@ module TestProduct (T : TESTER) = struct
         "y<1; a=T; inc(y,1)";
       assert_not_equivalent  "product population count 2"
         "y<1; (a=F + a=T; inc(y,1))"
-        "a=T; inc(y,1)"
+        "a=T; inc(y,1)";
+      assert_equivalent "product population count 3"
+        "y<1; (true + a=T; inc(y,1)); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>2"      
+        "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)"
     ]
                                             
 end

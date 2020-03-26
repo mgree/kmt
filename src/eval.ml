@@ -14,12 +14,9 @@ module KP = Prod.K
 module AA = Automata(KA)
 module AB = Automata(KB)
 module AP = Automata(KP)
-module CA = CompleteTheory(Addition)
-module CB = CompleteTheory(Boolean)
-module CP = CompleteTheory(Prod)
-module DA = Decide(CA)
-module DB = Decide(CB)
-module DP = Decide(CP)
+module DA = Decide(Addition)
+module DB = Decide(Boolean)
+module DP = Decide(Prod)
 
 let variables = ["a"; "b"; "c"; "d"; "e"; "f"; "g"; "h"; "i"]
 
@@ -191,10 +188,10 @@ let test_population_count () =
   ()
 
 let test_population_count_norm () = 
-  let term1 = DP.K.parse "y<0; a=T; inc(y,1); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>2" in 
-  let term2 = DP.K.parse "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" in 
+  let term1 = DP.K.parse "y<1; (true + a=T; inc(y,1)); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>2" in
+  let term2 = DP.K.parse "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" in 
   let eq = DP.equivalent term1 term2 in 
-  assert eq; 
+  assert eq;
   ()
 
 (* timeout [in seconds] *)
