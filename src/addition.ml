@@ -53,6 +53,8 @@ module rec Addition : THEORY with type A.t = a and type P.t = p = struct
       | Gt (x, v) -> x ^ ">" ^ string_of_int v
   end
 
+  let name () = "addition"
+                                            
   let variable = get_name_p
 
   let variable_test = get_name_a

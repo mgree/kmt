@@ -48,6 +48,8 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     let show = function Bool (x, v) -> x ^ "=" ^ if v then "T" else "F"
   end
 
+  let name () = "boolean"
+                                            
   let variable = get_name_p
 
   let variable_test = get_name_a

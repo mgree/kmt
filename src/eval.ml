@@ -3,7 +3,6 @@ open Addition
 open Boolean
 open Product
 open Automata
-open Complete
 open Decide
 
 module T = ANSITerminal

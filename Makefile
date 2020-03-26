@@ -2,9 +2,6 @@ MLFILES=src/*.ml src/*.mli src/*.mll src/*.mly
 
 build: main.native
 
-run: build
-	./main.native
-
 test: test_equivalence test_word
 
 test_equivalence : src/test_equivalence.ml

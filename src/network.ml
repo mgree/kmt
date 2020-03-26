@@ -64,7 +64,9 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
     let hash = hash_fv
     let show = show_field_val "<-"
   end
-  
+
+  let name () = "network"
+                                                      
   let parse name es =
     match name, es with
     | "=", [EId s1; EId s2] -> Left (field_val_of_string s1 (int_of_string s2))

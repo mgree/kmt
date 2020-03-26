@@ -48,6 +48,8 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
       | Gt (x, n) -> x ^ ">" ^ string_of_int n
   end
 
+  let name () = "incnat"
+                                            
   let variable =  function
     | Increment x -> x
     | Assign (x,_) -> x

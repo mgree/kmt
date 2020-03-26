@@ -10,7 +10,7 @@ module CompleteTheoryAux
     (T : THEORY)
     (M : SafeMap.S with type key = string and type value = T.P.t) :
   THEORY with type A.t = T.A.t and type P.t = M.t = struct
-  
+
   module rec Implementation : THEORY with type A.t = T.A.t and type P.t = M.t = struct
     module K = KAT (Implementation)
     module Test = K.Test
@@ -18,6 +18,8 @@ module CompleteTheoryAux
     module A = T.A
     module P = M
 
+    let name () = T.name ^ " (complete)"
+             
     let from_p (p: T.P.t) : P.t = M.singleton (T.variable p) p
 
     (* we use this to ensure all terms are hashconsed *)

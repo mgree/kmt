@@ -1,5 +1,4 @@
 open Kat
-open Complete
 open BatSet
 open Hashcons
 open Common

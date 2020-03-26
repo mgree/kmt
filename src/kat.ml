@@ -75,6 +75,8 @@ module type THEORY = sig
      and module Test = Test
      and module Term = Term
 
+  val name : unit -> string
+       
   val parse : string -> expr list -> (A.t, P.t) either
   val push_back : P.t -> A.t -> Test.t BatSet.PSet.t
   val subterms : A.t -> Test.t BatSet.PSet.t

@@ -14,6 +14,8 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
     module P = Common.Either.Make(T1.P)(T2.P)
     module A = Common.Either.Make(T1.A)(T2.A)
 
+    let name () = "product(" ^ T1.name () ^ ", " ^ T2.name () ^ ")"
+             
     let parse name es : (A.t, P.t) either =
       try 
         match T1.parse name es with 

@@ -240,7 +240,7 @@ module TestBoolean (T : TESTER) = struct
     |> all_pairs
     |> List.map (fun (lhs, rhs) -> assert_equivalent (lhs ^ " = " ^ rhs) lhs rhs)
 end
-
+                                
 module TestProduct (T : TESTER) = struct
   module TP = T(Product(Addition)(Boolean))
   open TP
