@@ -6,7 +6,7 @@ An implementation of [Kleene algebra modulo theories](https://arxiv.org/abs/1707
 
 If you have a recent version of OCaml, simply typing `make` should do the trick---it will call `ocamlbuild` for you. `make eval` will reproduce the evaluation from our paper; `make test` runs regression tests.
 
-You'll need the following OCaml packages: `ppx_deriving`, `batteries`, `ANSIterminal`, and `z3`. The build is via `ocamlbuild` with `ocamlfind`.
+You'll need the following OCaml packages: `ppx_deriving`, `batteries`, `ANSIterminal`, `fmt`, `alcotest`, and `z3`. The build is via `ocamlbuild` with `ocamlfind`.
 
 # Which example should I look at first?
 
