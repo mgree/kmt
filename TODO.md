@@ -1,4 +1,3 @@
-- Use a real unit testing framework
 - Add tests for word equivalence
 - Use a real logging framework
   + Make bits of logging configurable
