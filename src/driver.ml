@@ -29,6 +29,7 @@ module Driver(T : THEORY) = struct
     let (xhat, lanf_time) = time D.locally_unambiguous_form x in
     loud (fun () -> P.printf [] "  lanf = "; P.printf [P.green] "%s\n%!"(D.show_nf xhat));
     P.printf [P.cyan] "  lanf time: %fs\n%!" lanf_time;
+    flush stdout;
     xhat
 
   let show_equivalence_classes (ps: D.lanf list) =
