@@ -3,8 +3,13 @@
 - bool.ml-esque frontends for other modes
   + Test frontends
 - Use Fmt for better pretty printing
-- Property-based testing to bring automata and normalization in line
 - Switch to dune-based build?
 - Break off word stuff as a separate library?
 - OPAM package?
 - Drop 'complete' (or move to branch)
+
+
+- Bring automata and normalization in line
+  + Property-based testing
+  + Scour old thread for example of where automata is failing
+  + Option to use `same_actions_automata` in decide.ml
