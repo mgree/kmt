@@ -2,19 +2,19 @@ MLFILES= src/*.ml src/*.mli src/*.mll src/*.mly
 
 build: main.native
 
-%.native: $(MLFILES)
-	ocamlbuild -use-ocamlfind -r src/$@
-
 run: build
 	./main.native
 
-test: src/tests.ml 
-	ocamlbuild -use-ocamlfind -r src/tests.native
-	./tests.native
+test: src/test_equivalence.ml 
+	$(MAKE) test_equivalence.native
+	./test_equivalence.native
 
 eval: src/eval.ml
-	ocamlbuild -use-ocamlfind -r src/eval.native
+	$(MAKE) eval.native
 	./eval.native
+
+%.native: $(MLFILES)
+	ocamlbuild -use-ocamlfind -r src/$@
 
 clean:
 	ocamlbuild -clean
