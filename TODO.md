@@ -4,3 +4,4 @@
 - bool.ml-esque frontends for other modes
   + Test frontends
 - Use Fmt for better pretty printing
+- Property-based testing to bring automata and normalization in line
