@@ -85,46 +85,46 @@ module TestAddition (T : TESTER) = struct
   open TA
 
   let tests =
-    [ assert_equivalent "Idempotency1"  
+    [ assert_equivalent "predicate reflexivity"  
          "x > 2"  
          "x > 2";
-      assert_equivalent "Idempotency2"  
+      assert_equivalent "star reflexivity"  
          "inc(x,1)*; x > 2"  
          "inc(x,1)*; x > 2";
-      assert_equivalent "Unrolling1"  
+      assert_equivalent "unrolling 1"  
          "inc(x,1);inc(x,1)*; x > 2"
          "x>1;inc(x,1) + inc(x,1);inc(x,1);inc(x,1)*; x > 2";
-      assert_equivalent "Unrolling2"  
+      assert_equivalent "unrolling 2"  
          "inc(x,1)*; x > 2"  
          "x>2 + inc(x,1);inc(x,1)*; x > 2";
-      assert_equivalent "Unrolling3"  
+      assert_equivalent "unrolling 3"  
          "inc(x,1)*; x > 2"  
          "x>2 + inc(x,1)*; x > 2";
-      assert_equivalent "Postcondition1"  
+      assert_equivalent "postcondition 1"  
          "inc(x,1); inc(x,1); inc(x,1); x > 2"  
          "inc(x,1); inc(x,1); inc(x,1); x > 1"; 
-      assert_not_equivalent "Postcondition2"  
+      assert_not_equivalent "postcondition 2"  
          "inc(x,1); inc(x,1); inc(x,1); x > 2"  
          "inc(x,1); inc(x,1); inc(x,1); x > 3";
-      assert_equivalent "Commutativity"  
+      assert_equivalent "commutativity"  
          "inc(x,1);inc(y,1); x > 0; y > 0"
          "inc(x,1);inc(y,1); y > 0; x > 0";
-      assert_not_equivalent "Initial Conditions"  
+      assert_not_equivalent "initial conditions"  
          "inc(x,1);inc(x,1)*; x > 2"
          "x>2;inc(x,1) + inc(x,1);inc(x,1);inc(x,1)*; x > 2";
       assert_equivalent "Greater than"  
          "x>2;x>1"
          "x>2"; 
-      assert_equivalent "Commutativity-plus" 
+      assert_equivalent "commutativity plus" 
          "x > 2 + y > 1"
          "y > 1 + x > 2";
-      assert_equivalent "Idempotency-actions" 
+      assert_equivalent "idempotency actions" 
          "inc(x,1) + inc(x,1)"
          "inc(x,1)";
-      assert_equivalent "Test-in-loop1" 
+      assert_equivalent "test in loop 1" 
          "(inc(x,1);x>1)*"
          "true + x>0;inc(x,1);inc(x,1)*"; 
-      assert_not_equivalent "Test-in-loop2" 
+      assert_not_equivalent "test in loop 2" 
          "(inc(x,1);x>1)*"
          "true + inc(x,1);inc(x,1)*"
     ]
@@ -135,55 +135,55 @@ module TestIncNat (T : TESTER) = struct
   open TI
 
   let tests =
-    [ assert_equivalent "Idempotency1" 
+    [ assert_equivalent "idempotency 1" 
          "x > 2"  
          "x > 2";
-      assert_equivalent "Idempotency2" 
+      assert_equivalent "idempotency 2" 
          "inc(x)*; x > 2"  
          "inc(x)*; x > 2";
-      assert_equivalent "Unrolling1" 
+      assert_equivalent "unrolling 1" 
          "inc(x);inc(x)*; x > 2"
          "x>1;inc(x) + inc(x);inc(x);inc(x)*; x > 2";
-      assert_equivalent "Unrolling2" 
+      assert_equivalent "unrolling 2" 
          "inc(x)*; x > 2"  
          "x>2 + inc(x);inc(x)*; x > 2";
-      assert_equivalent "Unrolling3" 
+      assert_equivalent "unrolling 3" 
          "inc(x)*; x > 2"  
          "x>2 + inc(x)*; x > 2";
-      assert_equivalent "Postcondition1" 
+      assert_equivalent "postcondition 1" 
          "inc(x); inc(x); inc(x); x > 2"  
          "inc(x); inc(x); inc(x); x > 1"; 
-      assert_not_equivalent "Postcondition2" 
+      assert_not_equivalent "postcondition 2" 
          "inc(x); inc(x); inc(x); x > 2"  
          "inc(x); inc(x); inc(x); x > 3";
-      assert_equivalent "Commutativity" 
+      assert_equivalent "commutativity" 
          "inc(x);inc(y); x > 0; y > 0"
          "inc(x);inc(y); y > 0; x > 0";
-      assert_not_equivalent "Initial Conditions" 
+      assert_not_equivalent "initial Conditions" 
          "inc(x);inc(x)*; x > 2"
          "x>2;inc(x) + inc(x);inc(x);inc(x)*; x > 2";
-      assert_equivalent "Greater than" 
+      assert_equivalent "greater than" 
          "x>2;x>1"
          "x>2";
-      assert_equivalent "Commutativity-plus" 
+      assert_equivalent "commutativity plus" 
          "x > 2 + y > 1"
          "y > 1 + x > 2";
-      assert_equivalent "Idempotency-actions" 
+      assert_equivalent "idempotency actions" 
          "inc(x) + inc(x)"
          "inc(x)";
-      assert_equivalent "Test-in-loop1" 
+      assert_equivalent "test in loop 1" 
          "(inc(x);x>1)*"
          "true + x>0;inc(x);inc(x)*"; 
-      assert_not_equivalent "Test-in-loop2" 
+      assert_not_equivalent "test in loop 2" 
          "(inc(x);x>1)*"
          "true + inc(x);inc(x)*";
-      assert_equivalent "Canceled-set" 
+      assert_equivalent "canceled set" 
          "set(x,0);x>0"
          "false";
-      assert_equivalent "Set-canceled-pred" 
+      assert_equivalent "set canceled pred" 
          "set(x,5);x>0"
          "set(x,5)";
-      assert_not_equivalent "Tracing" 
+      assert_not_equivalent "tracing" 
          "(inc(x))*;set(x,0)"
          "set(x,0)"
     ]
@@ -194,40 +194,40 @@ module TestBoolean (T : TESTER) = struct
   open TB
 
   let tests =
-    [ assert_equivalent "Boolean-assign-eq"
+    [ assert_equivalent "boolean assign eq"
          "set(x,T); x=T"
          "set(x,T)";
-      assert_not_equivalent "Boolean-assign-neq"
+      assert_not_equivalent "boolean assign neq"
          "set(x,T); x=F"
          "set(x,T)";
-      assert_equivalent "Boolean-assign-eq2"
+      assert_equivalent "boolean assign eq 2"
          "set(x,T); set(x,F); x=F"
          "set(x,T); set(x,F)";
-      assert_equivalent  "Boolean-parity-loop"
+      assert_equivalent  "boolean parity loop"
         "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*"
         "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=F";
-      assert_not_equivalent "Boolean-parity-loop2"
+      assert_not_equivalent "boolean parity loop 2"
         "x=F; ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*"
         "     ( (x=T; set(x,F) + x=F; set(x,T));(x=T; set(x,F) + x=F; set(x,T)) )*; x=T";
-      assert_equivalent "Boolean-finiteness"
+      assert_equivalent "boolean finiteness"
          "x=F + x=T"
          "true";
-      assert_equivalent "Boolean-associativity"
+      assert_equivalent "boolean associativity"
          "(x=F + y=F) + z=F"
          "x=F + (y=F + z=F)";
-      assert_equivalent "Boolean-multiple-vars"
+      assert_equivalent "boolean multiple vars"
          "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=T + x=F;y=F)"
          "(x=T; set(y,T) + x=F; set(y,F))";
-      assert_not_equivalent "Boolean-multiple-vars2"
+      assert_not_equivalent "boolean multiple vars 2"
          "(x=T; set(y,T) + x=F; set(y,F)); (x=T;y=F + x=F;y=F)"
          "(x=T; set(y,T) + x=F; set(y,F))";
-      assert_equivalent "Boolean-unrolling"
+      assert_equivalent "boolean unrolling"
          "set(x,T)*; x=T"
          "x=T + set(x,T); set(x,T)*; x=T";
-      assert_equivalent "Boolean-tree-ordering"
+      assert_equivalent "boolean tree ordering"
         "set(w,F); set(x,T); set(y,F); set(z,F); ((w=T + x=T + y=T + z=T); set(a,T) + (not (w=T + x=T + y=T + z=T)); set(a,F))"
         "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))";
-      assert_equivalent "KAT P* identity"
+      assert_equivalent "kat p* identity"
         "(a=T)*"
         "(a=T;a=T)* + a=T;(a=T;a=T)*"
     ]
@@ -237,21 +237,21 @@ module TestProduct (T : TESTER) = struct
   module TP = T(Product(Addition)(Boolean))
   open TP
 
-  (* assert_equivalent 
+  (* assert_equivalent "is this even right?"
       "y<1; (a=F + a=T; inc(y,1)); (b=F + b=T; inc(y,1)); (c=F + c=T; inc(y,1)); y>2"
       "a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)" *)
 
   let tests =
-    [ assert_equivalent "Product-parsing"
+    [ assert_equivalent "product parsing"
         "set(x,T); x=T; inc(y,1)"
         "set(x,T); inc(y,1)";
-      assert_not_equivalent "Product-action-ordering"
+      assert_not_equivalent "product action ordering"
         "set(x,T); inc(y,1)"
         "inc(y,1); set(x,T)";
-      assert_equivalent  "Product-population-count"
+      assert_equivalent  "product population count"
         "y<1; (a=F + a=T; inc(y,1)); y > 0"
         "y<1; a=T; inc(y,1)";
-      assert_not_equivalent  "Product-population-count2"
+      assert_not_equivalent  "product population count 2"
         "y<1; (a=F + a=T; inc(y,1))"
         "a=T; inc(y,1)"
     ]
@@ -272,15 +272,15 @@ module TestProductAutomata = TestProduct(AutomataTester)
                            
 let main () =
   let open Alcotest in
-  run "Equivalence" [
-      "Addition normalization", TestAdditionNormalization.tests
-    ; "IncNat normalization", TestIncNatNormalization.tests
-    ; "Boolean normalization", TestBooleanNormalization.tests
-    ; "Product normalization", TestProductNormalization.tests
-    ; "Addition automata", TestAdditionAutomata.tests
-    ; "IncNat automata", TestIncNatAutomata.tests
-    ; "Boolean automata", TestBooleanAutomata.tests
-    ; "Product automata", TestProductAutomata.tests
+  run ~show_errors:true "equivalence" [
+      "addition normalization", TestAdditionNormalization.tests
+    ; "incnat normalization", TestIncNatNormalization.tests
+    ; "boolean normalization", TestBooleanNormalization.tests
+    ; "product normalization", TestProductNormalization.tests
+    ; "addition automata", TestAdditionAutomata.tests
+    ; "incnat automata", TestIncNatAutomata.tests
+    ; "boolean automata", TestBooleanAutomata.tests
+    ; "product automata", TestProductAutomata.tests
     ]
 ;;
 
