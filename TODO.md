@@ -8,7 +8,6 @@
 - OPAM package?
 - Drop 'complete' (or move to branch)
 
-
 - Bring automata and normalization in line
   + Property-based testing
   + Scour old thread for example of where automata is failing
