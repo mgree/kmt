@@ -15,6 +15,8 @@ before_install:
   - opam install -y batteries 
   - opam install -y ANSIterminal 
   - opam install -y -v z3=4.8.1
+  - opam install -y fmt
+  - opam install -y alcotest
   - LD_LIBRARY_PATH="$HOME/.opam/ocaml-base-compiler.4.07.1/lib/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
