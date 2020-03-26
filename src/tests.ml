@@ -23,8 +23,8 @@ module type TESTER =
 
     val equal : t -> t -> bool
     
-    val assert_equivalent : string -> string -> unit -> unit
-    val assert_not_equivalent : string -> string -> unit -> unit
+    val assert_equivalent : string -> string -> string -> unit Alcotest.test_case
+    val assert_not_equivalent : string -> string -> string -> unit Alcotest.test_case
   end
 
 module AutomataTester(T : THEORY) = struct
@@ -41,11 +41,13 @@ module AutomataTester(T : THEORY) = struct
     let a1 = A.of_term x in 
     let a2 = A.of_term y in 
     A.equivalent a1 a2
-           
-  let assert_aux b s1 s2 () = if b <> equal s1 s2 then raise (Violation (s1,s2))
 
-  let assert_equivalent = assert_aux true
-  let assert_not_equivalent = assert_aux false
+  let equivalent : string Alcotest.testable = Alcotest.testable pp equal
+
+  let assert_equivalent name l r =
+    Alcotest.test_case name `Quick (fun () -> Alcotest.(check equivalent) "equivalent" l r)
+  let assert_not_equivalent name l r =
+    Alcotest.test_case name `Quick (fun () -> Alcotest.(check (Alcotest.neg equivalent)) "inequivalent" l r)
 end
 
 module NormalizationTester(T : THEORY) = struct
@@ -61,10 +63,12 @@ module NormalizationTester(T : THEORY) = struct
     let q = K.parse s2 in 
     D.equivalent p q
     
-  let assert_aux b s1 s2 () = if b <> equal s1 s2 then raise (Violation (s1,s2))
+  let equivalent : string Alcotest.testable = Alcotest.testable pp equal
 
-  let assert_equivalent = assert_aux true
-  let assert_not_equivalent = assert_aux false
+  let assert_equivalent name l r =
+    Alcotest.test_case name `Quick (fun () -> Alcotest.(check equivalent) "equivalent" l r)
+  let assert_not_equivalent name l r =
+    Alcotest.test_case name `Quick (fun () -> Alcotest.(check (Alcotest.neg equivalent)) "inequivalent" l r)
 end
 
 let (%) f g = fun x -> g (f x)
@@ -78,13 +82,7 @@ let run test =
 (* Unit tests *)
 module TestAddition (T : TESTER) = struct
   module TA = T(Addition)
-
-  let equivalent : string Alcotest.testable = Alcotest.testable TA.pp TA.equal
-
-  let assert_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check equivalent) "equivalent" l r)
-  let assert_not_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check (Alcotest.neg equivalent)) "inequivalent" l r)
+  open TA
 
   let tests =
     [ assert_equivalent "Idempotency1"  
@@ -134,13 +132,7 @@ end
 
 module TestIncNat (T : TESTER) = struct
   module TI = T(IncNat)
-
-  let equivalent : string Alcotest.testable = Alcotest.testable TI.pp TI.equal
-
-  let assert_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check equivalent) "equivalent" l r)
-  let assert_not_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check (Alcotest.neg equivalent)) "inequivalent" l r)
+  open TI
 
   let tests =
     [ assert_equivalent "Idempotency1" 
@@ -199,13 +191,7 @@ end
 
 module TestBoolean (T : TESTER) = struct
   module TB = T(Boolean)
-
-  let equivalent : string Alcotest.testable = Alcotest.testable TB.pp TB.equal
-
-  let assert_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check equivalent) "equivalent" l r)
-  let assert_not_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check (Alcotest.neg equivalent)) "inequivalent" l r)
+  open TB
 
   let tests =
     [ assert_equivalent "Boolean-assign-eq"
@@ -251,13 +237,7 @@ end
 
 module TestProduct (T : TESTER) = struct
   module TP = T(Product(Addition)(Boolean))
-
-  let equivalent : string Alcotest.testable = Alcotest.testable TP.pp TP.equal
-
-  let assert_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check equivalent) "equivalent" l r)
-  let assert_not_equivalent name l r =
-    Alcotest.test_case name `Quick (fun () -> Alcotest.(check (Alcotest.neg equivalent)) "inequivalent" l r)
+  open TP
 
   (* assert_equivalent 
       "y<1; (a=F + a=T; inc(y,1)); (b=F + b=T; inc(y,1)); (c=F + c=T; inc(y,1)); y>2"
