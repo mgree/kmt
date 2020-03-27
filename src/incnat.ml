@@ -3,10 +3,6 @@ open Syntax
 open Common
 open Hashcons
 open Range
-
-let incnat_log_src = Logs.Src.create "kmt.incnat"
-                       ~doc:"logs IncNat theory operations"
-module Log = (val Logs.src_log incnat_log_src : Logs.LOG)
            
 type a = Gt of string * int [@@deriving eq]
 
@@ -53,6 +49,7 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
   end
 
   let name () = "incnat"
+  module Log = (val logger (name ()) : Logs.LOG)
                                             
   let variable =  function
     | Increment x -> x
@@ -101,24 +98,22 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
 
   let unbounded () = true
 
-  open Z3
-
   let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
-    let sym = Symbol.mk_string ctx str in
-    let int_sort = Arithmetic.Integer.mk_sort ctx in
-    let xc = Expr.mk_const ctx sym int_sort in
+    let sym = Z3.Symbol.mk_string ctx str in
+    let int_sort = Z3.Arithmetic.Integer.mk_sort ctx in
+    let xc = Z3.Expr.mk_const ctx sym int_sort in
     let is_nat =
-      Arithmetic.mk_ge ctx xc (Arithmetic.Integer.mk_numeral_i ctx 0)
+      Z3.Arithmetic.mk_ge ctx xc (Z3.Arithmetic.Integer.mk_numeral_i ctx 0)
     in
-    Solver.add solver [is_nat];
+    Z3.Solver.add solver [is_nat];
     xc
 
   let theory_to_z3_expr (a : A.t) (ctx : Z3.context) (map : Z3.Expr.expr StrMap.t) : Z3.Expr.expr = 
     match a with
     | Gt (x, v) ->
         let var = StrMap.find x map in
-        let value = Arithmetic.Integer.mk_numeral_i ctx v in
-        Arithmetic.mk_gt ctx var value
+        let value = Z3.Arithmetic.Integer.mk_numeral_i ctx v in
+        Z3.Arithmetic.mk_gt ctx var value
 
   module H = Hashtbl.Make (K.Test)
 
@@ -137,12 +132,12 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
       if not (can_use_fast_solver a)
       then
         begin
-          Logs.debug (fun m -> m "%s taking SLOW path" (K.Test.show a));
+          Log.debug (fun m -> m "%s taking SLOW path" (K.Test.show a));
           let ret = K.z3_satisfiable a in
           H.add tbl a ret ; ret
         end
       else begin
-        Logs.debug (fun m -> m "%s taking FAST path" (K.Test.show a)) ;
+        Log.debug (fun m -> m "%s taking FAST path" (K.Test.show a)) ;
         let mergeOp map1 map2 op =
           StrMap.merge
             (fun _ v1 v2 ->

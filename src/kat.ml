@@ -24,6 +24,10 @@ and ('a, 'p) kat_hons =
   | Seq of ('a, 'p) kat * ('a, 'p) kat
   | Star of ('a, 'p) kat
 
+let logger (name: string) =
+  let src = Logs.Src.create ("kmt." ^ name) ~doc:("logs " ^ name ^ " theory operations") in
+  Logs.src_log src
+          
 module type KAT_IMPL = sig
   module A : CollectionType
   module P : CollectionType

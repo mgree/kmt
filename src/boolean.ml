@@ -3,7 +3,7 @@ open Syntax
 open Common
 open Hashcons
 open Range
-
+                      
 type a = Bool of string * bool [@@deriving eq]
 
 type p = Assign of string * bool [@@deriving eq]
@@ -20,12 +20,10 @@ let compare_a a b =
   let cmp = StrType.compare (get_name_a a) (get_name_a b) in
   if cmp <> 0 then cmp else get_value_int a - get_value_int b
 
-
 let compare_p p q =
   match (p, q) with Assign (x, i), Assign (y, j) ->
     let cmp = StrType.compare x y in
     if cmp <> 0 then cmp else (if i then 1 else 0) - if j then 1 else 0
-
 
 module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
   module K = KAT (Boolean)
@@ -49,7 +47,8 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
   end
 
   let name () = "boolean"
-                                            
+  module Log = (val logger (name ()) : Logs.LOG)
+              
   let variable = get_name_p
 
   let variable_test = get_name_a
@@ -68,7 +67,6 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     | _, _ ->
         failwith
           ("Cannot create theory object from (" ^ name ^ ") and parameters")
-
 
   open BatSet
 
@@ -98,8 +96,6 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
 
   let unbounded () = false
 
-  open Z3
-
   let theory_to_z3_expr (a : A.t) (ctx : Z3.context) (map : Z3.Expr.expr StrMap.t) = 
     match a with Bool (x, v) ->
     let var = StrMap.find x map in
@@ -107,9 +103,9 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     Z3.Boolean.mk_eq ctx var value
 
   let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr =
-    let sym = Symbol.mk_string ctx str in
+    let sym = Z3.Symbol.mk_string ctx str in
     let bool_sort = Z3.Boolean.mk_sort ctx in
-    Expr.mk_const ctx sym bool_sort 
+    Z3.Expr.mk_const ctx sym bool_sort 
 
   module H = Hashtbl.Make (K.Test)
 
@@ -122,15 +118,15 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     | PSeq (b, c) -> can_use_fast_solver b && can_use_fast_solver c
     | Not {node= Theory _} -> true
     | Not _ -> false
-
+             
   let satisfiable (a: K.Test.t) =
     try H.find tbl a with _ ->
       if not (can_use_fast_solver a) then (
-        Logs.debug (fun m -> m "%s taking SLOW path" (K.Test.show a));
+        Log.debug (fun m -> m "%s taking SLOW path" (K.Test.show a));
         let ret = K.z3_satisfiable a in
         H.add tbl a ret ; ret )
       else (
-        Logs.debug (fun m -> m "%s taking FAST path" (K.Test.show a)) ;
+        Log.debug (fun m -> m "%s taking FAST path" (K.Test.show a)) ;
         let mergeOp map1 map2 op =
           StrMap.merge
             (fun _ v1 v2 ->

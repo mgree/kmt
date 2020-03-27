@@ -8,6 +8,11 @@ open Word
 
 (* Decision procedure based on rewriting via normalization *)
 
+let decide_log_src = Logs.Src.create "kmt.decide"
+                       ~doc:"logs KMT equivalence via normalization"
+module Log = (val Logs.src_log decide_log_src : Logs.LOG)
+
+   
 module Decide (T : THEORY) = struct
   module K = T.K
 
@@ -120,7 +125,7 @@ module Decide (T : THEORY) = struct
     
   let rec normalize (p: K.Term.t) : K.Term.t =
     let nf = normalize_term 0 p in
-    Logs.debug (fun m -> m "Full NF: %s" (show_nf nf)) ;
+    Log.debug (fun m -> m "Full NF: %s" (show_nf nf)) ;
     let nf = nf |> PSet.to_list |> List.sort compare_nf_elt in
     let base = K.pred zero in
     List.fold_left
@@ -128,7 +133,7 @@ module Decide (T : THEORY) = struct
       base nf
 
   and normalize_term (i: int) (p: K.Term.t) : nf =
-    Logs.debug (fun m -> m "%snormalize_term: %s" (spaces i) (K.Term.show p) ) ;
+    Log.debug (fun m -> m "%snormalize_term: %s" (spaces i) (K.Term.show p) ) ;
     match p.node with
     | Action _ -> singleton (one, p)
     | Pred a -> singleton (a, K.pred one)
@@ -142,7 +147,7 @@ module Decide (T : THEORY) = struct
 
 
   and push_back_j (i: int) (x: nf) (y: nf) : nf =
-    Logs.debug (fun m -> m "%spush_back_j: %s and %s" (spaces i) (show_nf x)
+    Log.debug (fun m -> m "%spush_back_j: %s and %s" (spaces i) (show_nf x)
           (show_nf y) ) ;
     let ret =
       PSet.fold
@@ -162,12 +167,12 @@ module Decide (T : THEORY) = struct
             y acc )
         x (empty ())
     in
-    Logs.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
+    Log.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
     ret
 
 
   and push_back_dot (i: int) (m: K.Term.t) (a: K.Test.t) : nf =
-    Logs.debug (fun f -> f "%spush_back_dot: %s and %s" (spaces i) (K.Term.show m)
+    Log.debug (fun f -> f "%spush_back_dot: %s and %s" (spaces i) (K.Term.show m)
           (K.Test.show a) ) ;
     let ret =
       match (m.node, a.node) with
@@ -212,12 +217,12 @@ module Decide (T : THEORY) = struct
       | _, Placeholder _ -> failwith "impossible"
       | Pred b, _ -> singleton (K.pseq b a, K.pred one)
     in
-    Logs.debug (fun m -> m "%sresult:%s" (spaces i) (show_nf ret)) ;
+    Log.debug (fun m -> m "%sresult:%s" (spaces i) (show_nf ret)) ;
     ret
 
 
   and push_back_t (i: int) (x: nf) (a: K.Test.t) : nf =
-    Logs.debug (fun m -> m "%spush_back_t: %s and %s" (spaces i) (show_nf x)
+    Log.debug (fun m -> m "%spush_back_t: %s and %s" (spaces i) (show_nf x)
           (K.Test.show a) ) ;
     let ret =
       PSet.fold
@@ -227,12 +232,12 @@ module Decide (T : THEORY) = struct
           nf_union elts acc )
         x (empty ())
     in
-    Logs.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
+    Log.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
     ret
 
 
   and push_back_r (i: int) (m: K.Term.t) (x: nf) : nf =
-    Logs.debug (fun f -> f "%spush_back_t: %s and %s" (spaces i) (K.Term.show m)
+    Log.debug (fun f -> f "%spush_back_t: %s and %s" (spaces i) (K.Term.show m)
           (show_nf x) ) ;
     let ret = PSet.fold
       (fun (test, term) acc ->
@@ -241,20 +246,20 @@ module Decide (T : THEORY) = struct
         nf_union elts acc )
       x (empty ())
     in
-    Logs.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
+    Log.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
     ret
 
   and push_back_star (i: int) (x: nf) : nf =
-    Logs.debug (fun m -> m "%spush_back_star: %s" (spaces i) (show_nf x) ) ;
+    Log.debug (fun m -> m "%spush_back_star: %s" (spaces i) (show_nf x) ) ;
     let ret =
       if PSet.is_empty x then singleton (one, K.pred one) (* StarZero *)
       else
         let a = pick_mt x in
-        Logs.debug (fun m -> m "%sMaximal test:%s" (spaces i) (K.Test.show a) ) ;
+        Log.debug (fun m -> m "%sMaximal test:%s" (spaces i) (K.Test.show a) ) ;
         let x, y = split a x in
         if PSet.is_empty y then
           if a.node == One then (* some weird optimization? MMG *) begin
-              Logs.debug (fun m -> m "%sHit a.node = One optimization" (spaces i));
+              Log.debug (fun m -> m "%sHit a.node = One optimization" (spaces i));
             (* MMG 2020-03-25 dropping speculative code for non-tracing semantics *)
             (*            if K.unbounded () || true then *)
               let term =
@@ -294,7 +299,7 @@ module Decide (T : THEORY) = struct
           let z = push_back_star (i + 1) (stitch a x') in
           push_back_j (i + 1) y' z
     in
-    Logs.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
+    Log.debug (fun m -> m "%sresult: %s" (spaces i) (show_nf ret)) ;
     ret
 
 
@@ -383,12 +388,12 @@ module Decide (T : THEORY) = struct
   let locally_unambiguous_form (x: nf) : lanf =
     let summands  = PSet.to_array x in
     let n         = Array.length summands in
-    Logs.debug (fun m -> m "translating %d summands in locally unambiguous form for %s" n (show_nf x));
+    Log.debug (fun m -> m "translating %d summands in locally unambiguous form for %s" n (show_nf x));
     let sels      = all_possible_selections n |> List.map (array_select summands n) in
-    Logs.debug (fun m -> m "got %d disjunctions" (List.length sels));
+    Log.debug (fun m -> m "got %d disjunctions" (List.length sels));
     List.fold_right (fun (disj: nf) (xhat: nf) ->
         let (preds, acts) = List.split (PSet.to_list disj) in
-        Logs.debug (fun m -> m "disjunction: %s" (show_nf disj));
+        Log.debug (fun m -> m "disjunction: %s" (show_nf disj));
         let a = List.fold_right K.pseq preds (K.one ()) in
         (* if a is contradictory (i.e., 0 or unsat) we must drop it here *)
         if a.node = Zero || not (T.satisfiable a)
@@ -469,21 +474,21 @@ module Decide (T : THEORY) = struct
         let sigma = sigma_m in
         let r = word_of m sigma in
         let s = word_of n sigma in
-        Logs.debug (fun f -> f "%s ~w~> %s" (K.Term.show m) (Word.show r));
-        Logs.debug (fun m -> m "%s ~w~> %s" (K.Term.show n) (Word.show s));
+        Log.debug (fun f -> f "%s ~w~> %s" (K.Term.show m) (Word.show r));
+        Log.debug (fun m -> m "%s ~w~> %s" (K.Term.show n) (Word.show s));
         if r.tag = s.tag
         then begin
-            Logs.debug (fun m -> m "same_tag = true (same tag)");
+            Log.debug (fun m -> m "same_tag = true (same tag)");
             true
           end
         else begin
           let same_words = equivalent_words r s (PSet.cardinal sigma) in
-          Logs.debug (fun m -> m "same_words = %b" same_words);
+          Log.debug (fun m -> m "same_words = %b" same_words);
           same_words
           end
       end
     else begin
-        Logs.debug (fun m -> m "different alphabets, can't be equal");
+        Log.debug (fun m -> m "different alphabets, can't be equal");
         false
       end
 
@@ -492,14 +497,14 @@ module Decide (T : THEORY) = struct
   let same_actions_automata (m: K.Term.t) (n: K.Term.t) : bool =
     if m.tag = n.tag
     then begin
-        Logs.debug (fun m -> m "same_action = true (same tag)");
+        Log.debug (fun m -> m "same_action = true (same tag)");
         true
       end
     else begin
         let a1 = A.of_term m in
         let a2 = A.of_term n in
         let same_actions = A.equivalent a1 a2 in
-        Logs.debug (fun m -> m "same_actions = %b" same_actions);
+        Log.debug (fun m -> m "same_actions = %b" same_actions);
         same_actions
       end
     
@@ -509,13 +514,13 @@ module Decide (T : THEORY) = struct
     if PSet.equal xhat yhat
     then
       begin
-        Logs.debug (fun m -> m "syntactic equality on locally unambiguous forms");
+        Log.debug (fun m -> m "syntactic equality on locally unambiguous forms");
         true
       end
     else if PSet.is_empty xhat || PSet.is_empty yhat (* handle emptiness! *)
     then 
       begin
-        Logs.debug (fun m -> m "empty NF, checking for emptiness of both");
+        Log.debug (fun m -> m "empty NF, checking for emptiness of both");
         PSet.is_empty xhat && PSet.is_empty yhat
       end
     else
@@ -523,12 +528,12 @@ module Decide (T : THEORY) = struct
         (fun (a1, m1) acc ->
           PSet.fold (fun (a2, m2) acc2 ->
               let adots = K.pseq a1 a2 in
-              Logs.debug (fun m -> m "checking adots=%s (from %s and %s)...%!" (K.Test.show adots) (K.Test.show a1) (K.Test.show a2));
+              Log.debug (fun m -> m "checking adots=%s (from %s and %s)...%!" (K.Test.show adots) (K.Test.show a1) (K.Test.show a2));
               (* if the conjunction is 0 or unsat, we drop it *)
               if adots.node = Zero || not (T.satisfiable adots)
               then 
                 begin
-                  Logs.debug (fun m -> m "skipping unsatisfiable case");
+                  Log.debug (fun m -> m "skipping unsatisfiable case");
                   acc2
                 end
               else 
@@ -542,17 +547,17 @@ module Decide (T : THEORY) = struct
     if PSet.equal nx ny
     then
       begin
-        Logs.debug (fun m -> m "syntactic equality on %s" (show_nf nx));
+        Log.debug (fun m -> m "syntactic equality on %s" (show_nf nx));
         true
       end
     else begin
-        Logs.debug (fun m -> m
+        Log.debug (fun m -> m
                            "running cross product on %s and %s"
                            (show_nf nx) (show_nf ny));
         let xhat = locally_unambiguous_form nx in
-        Logs.debug (fun m -> m "%s is locally unambiguous as %s" (show_nf nx) (show_nf xhat));
+        Log.debug (fun m -> m "%s is locally unambiguous as %s" (show_nf nx) (show_nf xhat));
         let yhat = locally_unambiguous_form ny in
-        Logs.debug (fun m -> m "%s is locally unambiguous as %s" (show_nf ny) (show_nf yhat));
+        Log.debug (fun m -> m "%s is locally unambiguous as %s" (show_nf ny) (show_nf yhat));
         equivalent_lanf xhat yhat
       end
     
