@@ -29,7 +29,7 @@ module type AUTOMATA_IMPL = sig
   val create :
     State.t -> (State.t -> Transitions.t) -> (State.t -> K.Test.t) -> t
 
-  val print : t -> unit
+  val to_string : t -> string
 end
 
 (* Implementation of automata that constructs 
@@ -78,18 +78,23 @@ struct
         transitions
     done
 
+  let to_string (auto: t) =
+    let lines = ref [] in
+    let add_line s = lines := s::!lines in
+    let add_trans (l, l', a, po) =
+      Printf.sprintf "transition: %s -> %s (%s,%s)"
+        (State.show l) (State.show l') (K.Test.show a) (POption.show po)
+      |> add_line
+    in
+    let add_accept (l, a) =
+      Printf.sprintf "accept:     %s [%s]" (State.show l) (K.Test.show a)
+      |> add_line
+    in
+    explore auto add_accept add_trans;
+    "---------------------------\n" ^
+    intercalate "\n" (List.rev !lines) ^ 
+    "\n---------------------------"
 
-  let print (auto: t) =
-    Logs.debug (fun m -> m "---------------------------");
-    let print_trans (l, l', a, po) =
-      Logs.debug (fun m -> m "transition: %s -> %s (%s,%s)" (State.show l)
-        (State.show l') (K.Test.show a) (POption.show po))
-    in
-    let print_accept (l, a) =
-      Logs.debug (fun m -> m "accept:     %s [%s]" (State.show l) (K.Test.show a))
-    in
-    explore auto print_accept print_trans ;
-    Logs.debug (fun m -> m "---------------------------")
 end
 
 module type KAT_AUTOMATA = sig
@@ -97,7 +102,7 @@ module type KAT_AUTOMATA = sig
   type t
   val of_term : K.Term.t -> t
   val equivalent : t -> t -> bool
-  val print : t -> unit
+  val to_string : t -> string
 end
 
 module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
@@ -658,29 +663,24 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     Logs.debug (fun m -> m "Replaced: %s" (K.Term.show term)) ;
     Logs.debug (fun m -> m "Map: %s" (TestNatMap.show placeholder_map) ) ;
     Logs.debug (fun m -> m "Characters: %s" (ActionSet.show chars)) ;
-    Logs.debug (fun m -> m "Policy Automata:") ;
-    debug (fun () -> print auto) ;
+    Logs.debug (fun m -> m "Policy Automata:\n%s" (to_string auto)) ;
     let auto =
       TestNatMap.fold
         (fun theory_test placeholder acc ->
           let x = Theory.test_automata theory_test chars in
-          Logs.debug (fun m -> m "Automata for: %s" (K.Test.show theory_test) ) ;
-          debug (fun () -> TestAutomata.print x) ;
+          Logs.debug (fun m -> m "Automata for: %s\n%s"
+                                 (K.Test.show theory_test)  (TestAutomata.to_string x));
           let x = RT.reindex x in
-          Logs.debug (fun m -> m "Reindexed Automaton") ;
-          debug (fun () -> print x) ;
+          Logs.debug (fun m -> m "Reindexed Automaton:\n%s" (to_string x)) ;
           let ret = Intersection.intersect acc x placeholder in
-          Logs.debug (fun m -> m "Current intersected Automaton:") ;
-          debug (fun () -> PairAutomata.print ret) ;
+          Logs.debug (fun m -> m "Current intersected Automaton:\n%s" (PairAutomata.to_string ret)) ;
           let ret = RP.reindex ret in
-          Logs.debug (fun m -> m "Intersected reindexed Automaton:") ;
-          debug (fun () -> print ret) ;
+          Logs.debug (fun m -> m "Intersected reindexed Automaton:\n%s" (to_string ret)) ;
           ret )
         placeholder_map auto
     in
     let auto = Determinize.determinize auto in
-    Logs.debug (fun m -> m "Determinized Automaton: ") ;
-    debug (fun () -> NatSetAutomata.print auto) ;
+    Logs.debug (fun m -> m "Determinized automaton:\n%s" (NatSetAutomata.to_string auto));
     let auto = RN.reindex auto in
     auto
 

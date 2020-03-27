@@ -144,8 +144,6 @@ let debug_enabled =
   Sys.argv |>
   Array.exists (fun flag -> flag = "--debug") 
  
-let debug f = if debug_enabled then f () else ()
-
 let quiet_enabled =
   Sys.argv |>
   Array.exists (fun flag -> flag = "--quiet") 
@@ -192,13 +190,17 @@ let timeout limit f x =
 
 let add_sep sep acc = if acc = "" then acc else sep ^ acc
 
+let rec intercalate sep l =
+  match l with
+  | [] -> ""
+  | [s] -> s
+  | s::l' -> s ^ sep ^ intercalate sep l
+                    
 let show_set f fold set =
   let elts = fold (fun x acc -> f x ^ add_sep "," acc) set "" in
   "{" ^ elts ^ "}"
 
-let show_list f lst =
-  let elts = List.fold_left (fun acc x -> f x ^ add_sep "," acc) "" lst in
-  "[" ^ elts ^ "]"
+let show_list f lst = "[" ^ intercalate "," (List.map f lst) ^ "]"
 
 let show_map fkey fval fold map =
   let aux k v acc = fkey k ^ "==>" ^ fval v ^ add_sep "," acc in
