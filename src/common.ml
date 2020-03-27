@@ -148,8 +148,6 @@ let quiet_enabled =
   Sys.argv |>
   Array.exists (fun flag -> flag = "--quiet") 
 
-let loud f = if quiet_enabled then () else f ()
-            
 let rec repeat n str =
   match n with x when x <= 0 -> "" | 1 -> str | _ -> str ^ repeat (n - 1) str
 
