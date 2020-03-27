@@ -12,6 +12,7 @@ module DIncNat = Driver(IncNat)
 module DAddition = Driver(Addition)
 module DNetwork = Driver(Network)
 module DProduct = Driver(Product(Boolean)(IncNat))
+module DProductAddition = Driver(Product(Boolean)(Addition))
 
 open Cmdliner
 
@@ -44,11 +45,15 @@ let mode =
     DNetwork.run, Arg.info ["network"] ~doc
   in
   let product =
-    let doc = "KMT product theory of booleans and monotonic naturals" in
+    let doc = "KMT THEORY of booleans and monotonic naturals" in
     DProduct.run, Arg.info ["product"] ~doc
   in
+  let product_addition =
+    let doc = "KMT THEORY of booleans and naturals" in
+    DProductAddition.run, Arg.info ["product-addition"; "aproduct"] ~doc
+  in
   Arg.(last & vflag_all [DBoolean.run]
-                [boolean; incnat; addition; network; product])
+                [boolean; incnat; addition; network; product; product_addition])
 
 let args = Arg.(non_empty & pos_all string [] & info [] ~docv:"KAT term")
 

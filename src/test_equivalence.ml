@@ -248,24 +248,26 @@ module TestProduct (T : TESTER) = struct
   let slow = if mode = Automata then `Slow else `Quick
      
   let tests =
-    [ assert_equivalent "product parsing"
+    [ assert_equivalent "actions parse"
         "set(x,T); x=T; inc(y,1)"
         "set(x,T); inc(y,1)";
-      assert_not_equivalent "product action ordering"
+      assert_not_equivalent "actions commute"
         "set(x,T); inc(y,1)"
         "inc(y,1); set(x,T)";
-      assert_equivalent  "product population count"
+      assert_equivalent  "population count"
         "y<1; (a=F + a=T; inc(y,1)); y > 0"
         "y<1; a=T; inc(y,1)";
-      assert_not_equivalent ~speed:slow "product population count 2"
+      assert_not_equivalent ~speed:slow "population count 2"
         "y<1; (a=F + a=T; inc(y,1))"
         "a=T; inc(y,1)";
-      assert_equivalent ~speed:slow "product population count 3"
+      assert_equivalent ~speed:slow "population count 3"
         "y<1; (true + a=T; inc(y,1)); (true + b=T; inc(y,1)); (true + c=T; inc(y,1)); y>2"      
         "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)";
-      assert_equivalent ~speed:slow "product population count 3 (variant)"
-      "y<1; (a=F + a=T; inc(y,1)); (b=F + b=T; inc(y,1)); (c=F + c=T; inc(y,1)); y>2"
-      "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)"
+      assert_equivalent ~speed:slow "population count 3 (variant)"
+        "y<1; (a=F + a=T; inc(y,1)); (b=F + b=T; inc(y,1)); (c=F + c=T; inc(y,1)); y>2"
+        "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)";
+(*      assert_not_equivalent "population count: mismatched domain (regression)"
+       "y<1; (a=F + a=T; inc(y,1)); not (y < 1)" "a=T;inc(y,1)" *)
     ]
                                             
 end

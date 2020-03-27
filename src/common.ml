@@ -202,12 +202,14 @@ let timeout limit f x =
     end
 
 let add_sep sep acc = if acc = "" then acc else sep ^ acc
-
-let rec intercalate sep l =
-  match l with
-  | [] -> ""
-  | [s] -> s
-  | s::l' -> s ^ sep ^ intercalate sep l
+                    
+let intercalate sep l =
+  let rec loop l acc first =
+    match l with
+    | [] -> acc
+    | s::l' -> loop l' (acc ^ (if first then "" else sep) ^ s) false
+  in
+  loop l "" true
                     
 let show_set f fold set =
   let elts = fold (fun x acc -> f x ^ add_sep "," acc) set "" in

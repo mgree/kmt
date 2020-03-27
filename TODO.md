@@ -1,19 +1,24 @@
+- lanf -> lunf
+
 - Logging
-  + CLI logging control
-  + Tagging of topics
+  + Tagging of topics (e.g., sat, other stuff...)
 
 - Commonality in `satisfiable`?
 
-- Test frontends
+- Testing
+  + Negative examples of word equality
+  + Frontends
+  + Bring automata and normalization in line
+    * Property-based testing
+    * Scour old thread for example of where automata is failing
+    * Option to use `same_actions_automata` in decide.ml
+
+
 - Use Fmt for better pretty printing
 - Switch to dune-based build?
 - Break off word stuff as a separate library?
 - OPAM package?
 
-- Bring automata and normalization in line
-  + Property-based testing
-  + Scour old thread for example of where automata is failing
-  + Option to use `same_actions_automata` in decide.ml
 
 - Heuristic optimizations
   + `p*p` ~~> `pp*`
