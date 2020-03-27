@@ -125,14 +125,12 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
 
   let satisfiable (a: K.Test.t) =
     try H.find tbl a with _ ->
-      (* Printf.printf "Checking Sat %s\n" (K.Test.show a); *)
-      debug (fun () -> Printf.printf "SAT: %s" (K.Test.show a)) ;
       if not (can_use_fast_solver a) then (
-        debug (fun () -> Printf.printf " SLOW\n") ;
+        Logs.debug (fun m -> m "%s taking SLOW path" (K.Test.show a));
         let ret = K.z3_satisfiable a in
         H.add tbl a ret ; ret )
       else (
-        debug (fun () -> Printf.printf " FAST\n") ;
+        Logs.debug (fun m -> m "%s taking FAST path" (K.Test.show a)) ;
         let mergeOp map1 map2 op =
           StrMap.merge
             (fun _ v1 v2 ->
@@ -161,6 +159,5 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
             let ret =
               StrMap.for_all (fun _ r -> not (Range.is_false r)) result
             in
-            (* Printf.printf "Actual Result: %b\n" ret; *)
             H.add tbl a ret ; ret )
 end

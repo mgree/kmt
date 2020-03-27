@@ -4,6 +4,10 @@ open Common
 open Hashcons
 open Range
 
+let incnat_log_src = Logs.Src.create "kmt.incnat"
+                       ~doc:"logs IncNat theory operations"
+module Log = (val Logs.src_log incnat_log_src : Logs.LOG)
+           
 type a = Gt of string * int [@@deriving eq]
 
 type p = Increment of string | Assign of string * int [@@deriving eq]
@@ -130,14 +134,15 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
 
   let satisfiable (a: K.Test.t) =
     try H.find tbl a with _ ->
-      (* Printf.printf "Checking Sat %s\n" (K.Test.show a); *)
-      debug (fun () -> Printf.printf "SAT: %s" (K.Test.show a)) ;
-      if not (can_use_fast_solver a) then (
-        debug (fun () -> Printf.printf " SLOW\n") ;
-        let ret = K.z3_satisfiable a in
-        H.add tbl a ret ; ret )
-      else (
-        debug (fun () -> Printf.printf " FAST\n") ;
+      if not (can_use_fast_solver a)
+      then
+        begin
+          Logs.debug (fun m -> m "%s taking SLOW path" (K.Test.show a));
+          let ret = K.z3_satisfiable a in
+          H.add tbl a ret ; ret
+        end
+      else begin
+        Logs.debug (fun m -> m "%s taking FAST path" (K.Test.show a)) ;
         let mergeOp map1 map2 op =
           StrMap.merge
             (fun _ v1 v2 ->
@@ -165,5 +170,6 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
               StrMap.for_all (fun _ r -> not (Range.is_false r)) result
             in
             (* Printf.printf "Actual Result: %b\n" ret; *)
-            H.add tbl a ret ; ret )
+            H.add tbl a ret ; ret
+        end
 end

@@ -38,6 +38,8 @@ let selected_mode =
   loop 1
 
 let main () =
+  Logs.set_reporter (Logs.format_reporter ());
+  Logs.set_level (if Common.debug_enabled then Some Logs.Debug else None);
   if Array.length Sys.argv < 2
   then begin
       P.printf [] "Usage: %s [--debug] [--quiet] [--MODE] [KAT term] ...\n\tMODE = boolean (DEFAULT) | incnat | addition | network | product (of boolean/incnat)\n"

@@ -2,6 +2,10 @@ open BatSet
 open Hashcons
 open Common
 
+let word_log_src = Logs.Src.create "kmt.word"
+                     ~doc:"logs regular expression/word equality tests"
+module Log = (val Logs.src_log word_log_src : Logs.LOG)
+   
 (* TODO parse words *)
    
 type letter = int
@@ -145,12 +149,10 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
          if c = sigma
          then []
          else begin
-             debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
-                                (Word.show w1) (Word.show w2) (show_letter c));
+             Log.debug (fun m -> m "comparing %s and %s on %s\n" (Word.show w1) (Word.show w2) (show_letter c));
              let w1c = derivative w1 c in
              let w2c = derivative w2 c in
-             debug (fun () -> Printf.printf "comparing %s and %s on %s\n"
-                                (Word.show w1) (Word.show w2) (show_letter c));
+             Log.debug (fun m -> m "comparing %s and %s on %s\n" (Word.show w1) (Word.show w2) (show_letter c));
              let st1 = find_state m w1c in
              let st2 = find_state m w2c in
              let push =
@@ -158,7 +160,7 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
                then raise (Acceptance_mismatch (w1c, w2c))
                else if not (UF.equal st1 st2)
                then begin
-                   debug (fun () -> Printf.printf "uniting...\n");                          
+                   Log.debug (fun m -> m "uniting...\n");                          
                    UF.unite st1 st2;
                    [(w1c,w2c)]
                  end
@@ -169,15 +171,11 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
        in
        try
          let app = inner 0 in
-         debug (fun () -> Printf.printf "added %s\n"
-                            (show_list (fun (w1,w2) ->
-                                 "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")")
-                               app));
+         Log.debug (fun m -> m "added %s\n" (show_list (fun (w1,w2) -> "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")") app));
          loop (l' @ app)
        with Acceptance_mismatch (w1, w2) ->
          begin
-           debug (fun () -> Printf.printf "%s and %s mismatch\n"
-                              (Word.show w1) (Word.show w2));
+           Log.debug (fun m -> m "%s and %s mismatch\n" (Word.show w1) (Word.show w2));
            false
          end
   in

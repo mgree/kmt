@@ -80,16 +80,16 @@ struct
 
 
   let print (auto: t) =
-    Printf.printf "---------------------------\n" ;
+    Logs.debug (fun m -> m "---------------------------");
     let print_trans (l, l', a, po) =
-      Printf.printf "transition: %s -> %s (%s,%s)\n" (State.show l)
-        (State.show l') (K.Test.show a) (POption.show po)
+      Logs.debug (fun m -> m "transition: %s -> %s (%s,%s)" (State.show l)
+        (State.show l') (K.Test.show a) (POption.show po))
     in
     let print_accept (l, a) =
-      Printf.printf "accept:     %s [%s]\n" (State.show l) (K.Test.show a)
+      Logs.debug (fun m -> m "accept:     %s [%s]" (State.show l) (K.Test.show a))
     in
     explore auto print_accept print_trans ;
-    Printf.printf "---------------------------\n"
+    Logs.debug (fun m -> m "---------------------------")
 end
 
 module type KAT_AUTOMATA = sig
@@ -284,7 +284,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       let subs =
         BatSet.PSet.fold (fun s acc -> TSet.add s acc) subs (TSet.empty ())
       in
-      debug (fun () -> Printf.printf "All subterms: %s\n" (TSet.show subs)) ;
+      Logs.debug (fun m -> m "All subterms: %s" (TSet.show subs)) ;
       (* Accept if the state is labeled with the test *)
       let accept (l: TSetOption.t) =
         match l with
@@ -296,7 +296,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         (* Look at each character and subterm *)
         let get_transitions_aux (c: K.P.t) (s: K.Test.t) (l: TSet.t) : TSet.t =
           let tests = K.push_back_test c s in
-          (* Printf.printf "Pushback(%s,%s) = %s\n" (K.P.show c) (K.Test.show s) (Common.show_set K.Test.show BatSet.PSet.fold tests); *)
+          (* Logs.debug (fun m -> m "Pushback(%s,%s) = %s" (K.P.show c) (K.Test.show s) (Common.show_set K.Test.show BatSet.PSet.fold tests)); *)
           (* if pair (a,p) where a is covered by current state *)
           (* then add this action K.A.t to the map of transitions *)
           BatSet.PSet.fold
@@ -325,14 +325,14 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                   SubtermsMap.add sub (get_implied_subs sub subs) acc )
                 subs (SubtermsMap.empty ())
             in
-            (* Printf.printf "Subterm map: %s\n" (SubtermsMap.show map); *)
+            (* Logs.debug (fun m -> m "Subterm map: %s" (SubtermsMap.show map)); *)
             let initials = initial_subterms subs map in
-            (* Printf.printf "Initial states: %s\n" (SubtermsSet.show initials); *)
+            (* Logs.debug (fun m -> m "Initial states: %s" (SubtermsSet.show initials)); *)
             SubtermsSet.fold
               (fun subs acc ->
                 let sub = TSet.fold K.pseq subs (K.one ()) in
                 let next_state = TestAutomata.StateSet.singleton (Some subs) in
-                (* Printf.printf "   ADD transition: %s --> %s\n" (K.Test.show sub) (TestAutomata.StateSet.show next_state); *)
+                (* Logs.debug (fun m -> m "   ADD transition: %s --> %s" (K.Test.show sub) (TestAutomata.StateSet.show next_state)); *)
                 TestAutomata.Transitions.add (sub, None) next_state acc )
               initials
               (TestAutomata.Transitions.empty ())
@@ -421,7 +421,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         replace x y placeholder
       in
       let trans (i, j) =
-        (* Printf.printf "  State: (%d,%d)\n" i j; *)
+        (* Logs.debug (fun m -> m "  State: (%d,%d)" i j); *)
         let accept_test = acceptance pred j in
         let x = transition pol i in
         let y = transition pred j in
@@ -461,20 +461,19 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                   (fun (a, l1) ->
                     TSPairSet.iter
                       (fun (b, l2) ->
-                        (* Printf.printf "  iter: a=%s, b=%s, l1=%s, l2=%s\n" (K.Test.show a) (K.Test.show b) (StateSet.show l1) (StateSet.show l2); *)
+                        (* Logs.debug (fun m -> m "  iter: a=%s, b=%s, l1=%s, l2=%s" (K.Test.show a) (K.Test.show b) (StateSet.show l1) (StateSet.show l2)); *)
                         let next_states = cross l1 l2 in
                         let new_test = replace a accept_test placeholder in
-                        (* Printf.printf "    new_test: %s\n" (K.Test.show new_test); *)
+                        (* Logs.debug (fun m -> m "    new_test: %s" (K.Test.show new_test)); *)
                         if new_test <> K.zero () then
-                          (* Printf.printf "    added?: (%s,%s)\n" (K.Test.show new_test) (POption.show po); *)
+                          (* Logs.debug (fun m -> m "    added?: (%s,%s)" (K.Test.show new_test) (POption.show po)); *)
                           ts
                           := PairAutomata.Transitions.add (new_test, po)
                                next_states !ts )
                       pairs' )
                   pairs ;
                 (* PairAutomata.Transitions.iter (fun k v -> (
-              Printf.printf "  FINAL IS: (%s,%s)\n" (PairAutomata.Transition.show k) (PairAutomata.StateSet.show v)
-            )) !ts; *)
+              Logs.debug (fun m -> m "  FINAL IS: (%s,%s)" (PairAutomata.Transition.show k) (PairAutomata.StateSet.show v)))) !ts; *)
                 PairAutomata.Transitions.disjoint_union acc !ts
                 (* let next_states = cross vs vs' in
             PairAutomata.Transitions.add (replace a accept_test placeholder, po) next_states acc *)
@@ -543,14 +542,14 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
           (* ensure predicates are disjoint by constructing minterms *)
           let t = transition auto 0 in
           let true_states = Transitions.find (K.one (), None) t in
-          (* Printf.printf "  True states: %s\n" (StateSet.show true_states); *)
+          (* Logs.debug (fun m -> m "  True states: %s" (StateSet.show true_states)); *)
           let root = Node (K.one (), true_states, Leaf, Leaf) in
           let tree =
             Transitions.fold (fun (a, _) ls acc -> 
-              (* Printf.printf "  Leaves currently:\n";
-              List.iter (fun (a,ls) -> Printf.printf "   LEAF: %s, states=%s\n" 
+              (* Logs.debug (fun m -> m "  Leaves currently:");
+              List.iter (fun (a,ls) -> Logs.debug (fun m -> m "   LEAF: %s, states=%s" 
               (K.Test.show a) (StateSet.show ls)) (leaves acc);
-              Printf.printf "  mintree add %s\n" (K.Test.show a); *)
+              Logs.debug (fun m -> m "  mintree add %s" (K.Test.show a)); *)
               refine acc a ls
             ) t root
           in
@@ -558,7 +557,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
           let ret =
             List.fold_left
               (fun acc ((a, ls): K.Test.t * StateSet.t) ->
-                (* Printf.printf "Adding transition: %s for %s\n" (K.Test.show a) (StateSet.show ls); *)
+                (* Logs.debug (fun m -> m "Adding transition: %s for %s" (K.Test.show a) (StateSet.show ls)); *)
                 NatSetAutomata.Transitions.add (a, None)
                   (StateSetSet.singleton (convert ls))
                   acc )
@@ -628,8 +627,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     let chars = characters term in
     let amap = action_map term in
     (* NatTermMap.iter (fun l deriv -> 
-      Printf.printf "Partial: %d --> %s\n" l (K.Term.show deriv)
-    ) partials; *)
+      Logs.debug (fun m -> m "Partial: %d --> %s" l (K.Term.show deriv))) partials; *)
     let accept (l: int) =
       if l = 0 then K.zero () else observation (NatTermMap.find l partials)
     in
@@ -639,11 +637,11 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       else
         let cont = NatTermMap.find l partials in
         let dkl = derivative cont in
-        (* Printf.printf "Continuation for %d is %s\n" l (K.Term.show cont);
-        Printf.printf "Derivative for %d is %s\n" l (DerivativeSet.show dkl); *)
+        (* Logs.debug (fun m -> m "Continuation for %d is %s" l (K.Term.show cont));
+        Logs.debug (fun m -> m "Derivative for %d is %s" l (DerivativeSet.show dkl)); *)
         let transitions ((d, l, k): DerivativeSet.elt) acc =
           let action = NatActionMap.find l amap in
-          (* Printf.printf "  Adding action: (%s,%s)\n" (K.Test.show d) (K.P.show action); *)
+          (* Logs.debug (fun m -> m "  Adding action: (%s,%s)" (K.Test.show d) (K.P.show action)); *)
           if d = K.zero () then acc
           else
             let key = (d, Some action) in
@@ -656,33 +654,32 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         DerivativeSet.fold transitions dkl (Transitions.empty ())
     in
     let auto = create 0 trans accept in
-    debug (fun () -> Printf.printf "Action Map: %s\n" (NatActionMap.show amap)) ;
-    debug (fun () -> Printf.printf "Replaced: %s\n" (K.Term.show term)) ;
-    debug (fun () -> Printf.printf "Map: %s\n" (TestNatMap.show placeholder_map) ) ;
-    debug (fun () -> Printf.printf "Characters: %s\n" (ActionSet.show chars)) ;
-    debug (fun () -> Printf.printf "Policy Automata:\n") ;
+    Logs.debug (fun m -> m "Action Map: %s" (NatActionMap.show amap)) ;
+    Logs.debug (fun m -> m "Replaced: %s" (K.Term.show term)) ;
+    Logs.debug (fun m -> m "Map: %s" (TestNatMap.show placeholder_map) ) ;
+    Logs.debug (fun m -> m "Characters: %s" (ActionSet.show chars)) ;
+    Logs.debug (fun m -> m "Policy Automata:") ;
     debug (fun () -> print auto) ;
     let auto =
       TestNatMap.fold
         (fun theory_test placeholder acc ->
           let x = Theory.test_automata theory_test chars in
-          debug (fun () ->
-              Printf.printf "Automata for: %s\n" (K.Test.show theory_test) ) ;
+          Logs.debug (fun m -> m "Automata for: %s" (K.Test.show theory_test) ) ;
           debug (fun () -> TestAutomata.print x) ;
           let x = RT.reindex x in
-          debug (fun () -> Printf.printf "Reindexed Automaton\n") ;
+          Logs.debug (fun m -> m "Reindexed Automaton") ;
           debug (fun () -> print x) ;
           let ret = Intersection.intersect acc x placeholder in
-          debug (fun () -> Printf.printf "Current intersected Automaton:\n") ;
+          Logs.debug (fun m -> m "Current intersected Automaton:") ;
           debug (fun () -> PairAutomata.print ret) ;
           let ret = RP.reindex ret in
-          debug (fun () -> Printf.printf "Intersected reindexed Automaton:\n") ;
+          Logs.debug (fun m -> m "Intersected reindexed Automaton:") ;
           debug (fun () -> print ret) ;
           ret )
         placeholder_map auto
     in
     let auto = Determinize.determinize auto in
-    debug (fun () -> Printf.printf "Determinized Automaton: \n") ;
+    Logs.debug (fun m -> m "Determinized Automaton: ") ;
     debug (fun () -> NatSetAutomata.print auto) ;
     let auto = RN.reindex auto in
     auto
@@ -740,17 +737,15 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                             let a1 = acceptance auto1 l1 in
                             let a2 = acceptance auto2 l2 in
                             if a1 <> a2 then (
-                              debug (fun () ->
-                                  Printf.printf
-                                    "Different acceptance: (%d,%d)\n" l1 l2 ) ;
+                              Logs.debug (fun m -> m
+                                    "Different acceptance: (%d,%d)" l1 l2 ) ;
                               exit := true )
                             else found := true ;
                             let value =
                               if flip then (State l2, State l1)
                               else (State l1, State l2)
                             in
-                            debug (fun () ->
-                                Printf.printf "  Adding state (%s,%s)\n"
+                            Logs.debug (fun m -> m "  Adding state (%s,%s)"
                                   (fst value |> EqState.show)
                                   (snd value |> EqState.show) ) ;
                             Queue.push value todo )
@@ -759,27 +754,22 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                  let value =
                    if flip then (Garbage, State l1) else (State l1, Garbage)
                  in
-                 debug (fun () ->
-                     Printf.printf "  Adding state (%s,%s)\n"
+                 Logs.debug (fun m -> m "  Adding state (%s,%s)"
                        (fst value |> EqState.show)
                        (snd value |> EqState.show) ) ;
                  Queue.push value todo ) )
       in
       if !bad then false
       else (
-        debug (fun () ->
+        Logs.debug (fun m ->
             Queue.iter
-              (fun (x, y) ->
-                Printf.printf "Initial pair: (%s,%s)\n" (EqState.show x)
-                  (EqState.show y) )
-              todo ) ;
+              (fun (x, y) -> m "Initial pair: (%s,%s)" (EqState.show x) (EqState.show y) )
+              todo) ;
         (* Check if bisimilar. If exit early, then return false *)
         let exit = ref false in
         while not (Queue.is_empty todo) && not !exit do
           let (x, y) as z = Queue.pop todo in
-          debug (fun () ->
-              Printf.printf "Looking at: (%s,%s)\n" (EqState.show x)
-                (EqState.show y) ) ;
+          Logs.debug (fun m -> m "Looking at: (%s,%s)" (EqState.show x) (EqState.show y)) ;
           if not (EqStateSet.mem z !r) then
             match (x, y) with
             | Garbage, Garbage -> ()
@@ -789,8 +779,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                 if a = K.zero () then
                   push_pairs t1 (Transitions.empty ()) false exit
                 else (
-                  debug (fun () ->
-                      Printf.printf "Nonzero acceptance for: (%s,%s)\n"
+                  Logs.debug (fun m -> m "Nonzero acceptance for: (%s,%s)"
                         (EqState.show x) (EqState.show y) ) ;
                   exit := true )
             | Garbage, State s2 ->
@@ -799,8 +788,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                 if a = K.zero () then
                   push_pairs t2 (Transitions.empty ()) true exit
                 else (
-                  debug (fun () ->
-                      Printf.printf "Nonzero acceptance for: (%s,%s)\n"
+                  Logs.debug (fun m -> m "Nonzero acceptance for: (%s,%s)"
                         (EqState.show x) (EqState.show y) ) ;
                   exit := true )
             | State s1, State s2 ->

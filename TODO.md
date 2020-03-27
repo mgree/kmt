@@ -1,5 +1,9 @@
-- Use a real logging framework
-  + Make bits of logging configurable
+- Logging
+  + CLI logging control
+  + Tagging of topics
+
+- Commonality in `satisfiable`?
+
 - Test frontends
 - Use Fmt for better pretty printing
 - Switch to dune-based build?

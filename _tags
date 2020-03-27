@@ -1,1 +1,1 @@
-true: package(ppx_deriving.std), package(batteries), package(str), package(unix), package(ANSITerminal), package(fmt), package(alcotest), package(z3), thread, cclib(-lstdc++)
+true: package(ppx_deriving.std), package(batteries), package(str), package(unix), package(ANSITerminal), package(fmt), package(alcotest), package(logs), package(z3), thread, cclib(-lstdc++)
