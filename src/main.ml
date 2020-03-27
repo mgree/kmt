@@ -44,11 +44,17 @@ let setup_log style_renderer level : unit =
   ()
 
 let main () =
-  setup_log (Some `Ansi_tty) (if Common.debug_enabled then Some Logs.Debug else None);
+  setup_log (Some `Ansi_tty)
+    (Some (if Common.debug_enabled
+           then Logs.Debug
+           else if Common.quiet_enabled
+           then Logs.Error
+           else Logs.Info));
   if Array.length Sys.argv < 2
   then begin
-      P.printf [] "Usage: %s [--debug] [--quiet] [--MODE] [KAT term] ...\n\tMODE = boolean (DEFAULT) | incnat | addition | network | product (of boolean/incnat)\n"
-        Sys.executable_name;
+      Log.err (fun m -> m "Usage: %s [--debug] [--quiet] [--MODE] [KAT term] ...\n\tMODE = boolean (DEFAULT) | incnat | addition | network | product (of boolean/incnat)\n"
+                          Sys.executable_name);
+      exit 2
     end
   else selected_mode Sys.argv
 ;;
