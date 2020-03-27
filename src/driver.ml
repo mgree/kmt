@@ -48,21 +48,8 @@ module Driver(T : THEORY) = struct
                      (List.fold_left
                         (fun acc x -> D.show_nf x ^ Common.add_sep "; " acc) "" cls)))
 
-  let main argv =
-    if Array.length Sys.argv < 2
-    then begin
-        Log.err (fun m -> m "Usage: %s [--debug] [--quiet] [--MODE] [%s KAT term] ...\n\tMODE = boolean (DEFAULT) | incnat | addition | network | product (of boolean/incnat)\n"
-          Sys.executable_name (T.name ());
-        exit 2)
-      end
-    else
-      let ps =
-        Sys.argv
-        |> Array.to_list
-        |> List.tl
-        |> List.filter (fun s -> not (is_flag s))
-        |> List.map parse_normalize_and_show
-      in
-      if List.length ps > 1
-      then show_equivalence_classes ps
+  let run ss =
+    let ps = List.map parse_normalize_and_show ss in
+    if List.length ps > 1
+    then show_equivalence_classes ps
 end
