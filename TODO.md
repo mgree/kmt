@@ -1,6 +1,7 @@
 - lanf -> lunf
 
 - Logging
+  + Way to select sources from cmdline
   + Tagging of topics (e.g., sat, other stuff...)
 
 - Commonality in `satisfiable`?

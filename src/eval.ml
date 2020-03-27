@@ -193,6 +193,23 @@ let test_population_count_norm () =
   assert eq;
   ()
 
+let test_toggle_four () =
+  let term1 = KP.parse "(x=F;set(x,T) + y=F;set(y,T) + x=T;set(x,F) + y=T;set(y,F) + z=F;set(z,T) + z=T;set(z,F))*" in
+  let term2 = term1 in
+  let auto1 = AP.of_term term1 in 
+  let auto2 = AP.of_term term2 in 
+  let eq = AP.equivalent auto1 auto2 in 
+  assert eq; 
+  ()
+
+let test_toggle_four_norm () =
+  let term1 = DP.K.parse "(x=F;set(x,T) + y=F;set(y,T) + x=T;set(x,F) + y=T;set(y,F) + z=F;set(z,T) + z=T;set(z,F))*" in
+  let term2 = term1 in
+  let eq = DP.equivalent term1 term2 in 
+  assert eq; 
+  ()
+
+  
 (* timeout [in seconds] *)
 let timeout = ref 30
 
@@ -230,5 +247,8 @@ let main =
   run_test "boolean tree (rewrite)" test_boolean_formula_norm ();
 
   run_test "population count" test_population_count ();
-  run_test "population count (rewrite)" test_population_count_norm ()
+  run_test "population count (rewrite)" test_population_count_norm ();
 
+  run_test "toggle four bits" test_toggle_four ();
+  run_test "toggle four bits (rewrite)" test_toggle_four_norm ();
+    
