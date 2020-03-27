@@ -135,6 +135,21 @@ let cross_product x y base f =
       )
     x base
 
+let equivalence_classes (eq_dec: 'a -> 'a -> bool) (l: 'a list) : ('a list) list =
+  let rec add (x: 'a) (eqs: ('a list) list) : ('a list) list =
+    match eqs with
+    | [] -> [[x]]
+    | cls::eqs ->
+       begin match cls with
+       | [] -> add x eqs (* should never happen *)
+       | (rep::_) -> (* TODO MMG 2020-03-27 heuristic for selecting representative? *)
+          if eq_dec x rep
+          then (x::cls)::eqs
+          else cls::add x eqs
+       end
+  in
+  List.fold_right add l []
+
 let unreachable () = failwith "unreachable"
 
 (* Convenience functions that help for 

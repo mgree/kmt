@@ -9,17 +9,22 @@ let is_flag (s: string) : bool =
 let driver_log_src = Logs.Src.create "kmt.driver"
                        ~doc:"logs KMT equivalence class driver"
 module Log = (val Logs.src_log driver_log_src : Logs.LOG)
-  
+
+type decision_procedure = Normalization | Automata
+           
 module Driver(T : THEORY) = struct
   module K = T.K
   module A = Automata(K)
   module D = Decide(T)
 
-  let parse_normalize_and_show (s: string) : D.lanf =
-    (* header *)
+  let parse_and_show (s: string) : K.Term.t =
     let p = K.parse s in
 
     Log.app (fun m -> m "[%s parsed as %s]" s (K.Term.show p));
+    p
+           
+  let parse_normalize_and_show (s: string) : D.lanf =
+    let p = parse_and_show s in
     
     (* normalization and lanf *)
     let (x, nf_time) = time (D.normalize_term 0) p in
@@ -32,8 +37,17 @@ module Driver(T : THEORY) = struct
     flush stdout;
     xhat
 
-  let show_equivalence_classes (ps: D.lanf list) =
-    let eqs = D.equivalence_classes_lanf ps in
+  let parse_automatize_and_show (s: string) : A.t =
+    let p = parse_and_show s in
+    
+    (* conversion to automaton *)
+    let (auto, auto_time) = time A.of_term p in
+    Log.info (fun m ->  m "%s" (A.to_string auto));
+    Log.app (fun m -> m "time: %fs" auto_time);
+    auto
+    
+  let show_equivalence_classes (eq_dec: 'a -> 'a -> bool) (show: 'a -> string) (ps: 'a list) =
+    let eqs = equivalence_classes eq_dec ps in
     let num_eqs = List.length eqs in
     
     (* header *)
@@ -46,10 +60,16 @@ module Driver(T : THEORY) = struct
                Log.info (fun m ->
                    m "%d: %s" (i+1)
                      (List.fold_left
-                        (fun acc x -> D.show_nf x ^ Common.add_sep "; " acc) "" cls)))
-
-  let run ss =
-    let ps = List.map parse_normalize_and_show ss in
-    if List.length ps > 1
-    then show_equivalence_classes ps
+                        (fun acc x -> show x ^ Common.add_sep "; " acc) "" cls)))
+    
+  let run dec ss =
+    let go parse eq_dec show ss =
+      let xs = List.map parse ss in
+      if List.length xs > 1
+      then show_equivalence_classes eq_dec show xs
+    in
+    match dec with
+    | Normalization -> go parse_normalize_and_show D.equivalent_lanf D.show_nf ss
+    | Automata -> go parse_automatize_and_show A.equivalent A.to_string ss
+       
 end

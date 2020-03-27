@@ -566,19 +566,4 @@ module Decide (T : THEORY) = struct
     let ny = normalize_term 0 q in
     equivalent_nf nx ny
 
-  let equivalence_classes_lanf (l: lanf list) : (lanf list) list =
-    let rec add (x: lanf) (eqs: (lanf list) list) : (lanf list) list =
-      match eqs with
-      | [] -> [[x]]
-      | cls::eqs ->
-         begin match cls with
-         | [] -> add x eqs (* should never happen *)
-         | (rep::_) ->
-            if equivalent_lanf x rep
-            then (x::cls)::eqs
-            else cls::add x eqs
-         end
-    in
-    List.fold_right add l []
-
 end
