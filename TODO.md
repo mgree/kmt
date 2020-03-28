@@ -1,8 +1,8 @@
 - lanf -> lunf
 
 - Logging
-  + Way to select sources from cmdline
   + Tagging of topics (e.g., sat, other stuff...)
+
 
 - Commonality in `satisfiable`?
 
@@ -13,7 +13,7 @@
     * Property-based testing
     * Scour old thread for example of where automata is failing
     * Option to use `same_actions_automata` in decide.ml
-
+  + Fix eval to be nicer
 
 - Use Fmt for better pretty printing
 - Switch to dune-based build?

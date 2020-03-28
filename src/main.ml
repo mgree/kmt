@@ -63,14 +63,25 @@ let setup_log style_renderer level : unit =
   Logs.set_reporter (Logs_fmt.reporter ());
   ()
          
-let setup_log =
-  Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ())
+let setup_log = Term.(const setup_log $ Fmt_cli.style_renderer () $ Logs_cli.level ())
 
-let run dec mode args () = mode dec args
+let debugs =
+  let debug_flags = Logs.Src.list () |> List.map (fun src -> (Logs.Src.name src, src)) in
+  let doc = "Turn on debugging from $(docv). $(docv) must be " ^
+              (Arg.doc_alts_enum debug_flags) ^ "."          
+  in
+  Arg.(value & opt_all (enum debug_flags) [] & info ["d"; "debug"] ~docv:"SRC" ~doc)
+
+let setup_debugs srcs =
+  srcs |> List.iter (fun src -> Logs.Src.set_level src (Some Logs.Debug))
+
+let setup_debugs = Term.(const setup_debugs $ debugs)
+                 
+let run dec mode args () () = mode dec args
   
 let cmd =
   let doc = "compute equivalence classes for various KMT theories" in
-  Term.(const run $ decision_procedure $ mode $ args $ setup_log),
+  Term.(const run $ decision_procedure $ mode $ args $ setup_log $ setup_debugs),
   Term.info "kmt" ~version:"v0.1" ~exits:Term.default_exits ~doc
   
 let main () = Term.(exit @@ eval cmd)
