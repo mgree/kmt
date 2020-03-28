@@ -74,12 +74,12 @@ module rec Addition : THEORY with type A.t = a and type P.t = p = struct
 
   let push_back (Increment (x, i)) a =
     match a with
-    | Lt (_, j) when i >= j -> PSet.create K.Test.compare
-    | Gt (_, j) when i > j -> PSet.singleton ~cmp:K.Test.compare (K.one ())
-    | Lt (y, j) when x = y ->
-        PSet.singleton ~cmp:K.Test.compare (K.theory (Lt (y, j - i)))
-    | Gt (y, j) when x = y ->
-        PSet.singleton ~cmp:K.Test.compare (K.theory (Gt (y, j - i)))
+    | Lt (y, j) when x = y -> if i >= j 
+        then PSet.create K.Test.compare 
+        else PSet.singleton ~cmp:K.Test.compare (K.theory (Lt (y, j - i)))
+    | Gt (y, j) when x = y -> if i > j 
+        then PSet.singleton ~cmp:K.Test.compare (K.one ())
+        else PSet.singleton ~cmp:K.Test.compare (K.theory (Gt (y, j - i)))
     | _ -> PSet.singleton ~cmp:K.Test.compare (K.theory a)
 
 
