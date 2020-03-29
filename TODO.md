@@ -3,8 +3,11 @@
 - Logging
   + Tagging of topics (e.g., sat, other stuff...)
 
-
+- SMT module
 - Commonality in `satisfiable`?
+
+- fancy OCaml modules to dynamically generate KMT theories?
+  (can you define a recursive function with a module return type?)
 
 - Testing
   + Negative examples of word equality
@@ -19,7 +22,6 @@
 - Switch to dune-based build?
 - Break off word stuff as a separate library?
 - OPAM package?
-
 
 - Heuristic optimizations
   + `p*p` ~~> `pp*`
