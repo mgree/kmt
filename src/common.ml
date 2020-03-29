@@ -126,7 +126,12 @@ let cartesian_product (l1: 'a list) (l2: 'b list) : ('a * 'b) list =
   concat_map (fun a -> List.map (fun b -> (a,b)) l2) l1
   
 let all_pairs (l: 'a list) : ('a * 'a) list =
-  cartesian_product l l
+  let rec loop l acc =
+    match l with
+    | [] -> acc
+    | a::l' -> loop l' (List.map (fun b -> (a,b)) l' @ acc)
+  in
+  loop l []
   
 let cross_product x y base f =
   BatSet.PSet.fold
