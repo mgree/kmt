@@ -58,7 +58,7 @@ let main () =
             test_case ("reflexivity (" ^ Word.show w ^ ")") `Quick
               (fun () -> check_equivalent w w))
     ; "symmetry",
-      cartesian_product words words |>
+      unique_pairs words |>
         List.map (fun (w1, w2) ->
             test_case ("symmetry (" ^ Word.show w1 ^ " and " ^ Word.show w2 ^ ")") `Quick
               (fun () -> check bool "same answer" (same_words w1 w2) (same_words w2 w1)))

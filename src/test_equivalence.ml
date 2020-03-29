@@ -237,7 +237,7 @@ module TestBoolean (T : TESTER) = struct
     |> permutations
     |> List.map (List.fold_left (fun acc e -> e ^ add_sep " + " acc) "")
     |> List.map (fun inner -> "(" ^ inner ^ ")*")
-    |> all_pairs
+    |> unique_pairs
     |> List.map (fun (lhs, rhs) -> assert_equivalent (lhs ^ " = " ^ rhs) lhs rhs)
 end
                                 

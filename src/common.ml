@@ -124,8 +124,10 @@ let rec permutations l =
              
 let cartesian_product (l1: 'a list) (l2: 'b list) : ('a * 'b) list =
   concat_map (fun a -> List.map (fun b -> (a,b)) l2) l1
+
+let all_pairs l = cartesian_product l
   
-let all_pairs (l: 'a list) : ('a * 'a) list =
+let unique_pairs (l: 'a list) : ('a * 'a) list =
   let rec loop l acc =
     match l with
     | [] -> acc
