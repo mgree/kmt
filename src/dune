@@ -1,0 +1,31 @@
+; (install
+;   (section bin)
+;   (files (main.exe as kmt)))
+
+(executable
+ (name main)
+ (libraries batteries str unix ANSITerminal
+            fmt fmt.cli fmt.tty logs logs.fmt logs.cli
+            z3)
+ (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+ (flags -thread (-cclib -lstdc++)))
+
+;(test
+;  (name test_equivalence)
+;  (libraries batteries str unix ANSITerminal
+;             fmt fmt.cli fmt.tty alcotest logs logs.fmt logs.cli
+;             z3)
+;  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+;  (flags -thread (-cclib -lstdc++)))
+
+;(test
+; (name test_word)
+; 
+; (libraries batteries str unix ANSITerminal
+;            fmt fmt.cli fmt.tty alcotest logs logs.fmt logs.cli
+;            z3)
+; (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+; (flags -thread (-cclib -lstdc++)))
+
+(ocamllex lexer)             
+(ocamlyacc parser)

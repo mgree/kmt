@@ -1,3 +1,5 @@
 *.native
 _build
 *~
+.merlin
+*.exe
