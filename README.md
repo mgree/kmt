@@ -12,7 +12,7 @@ You'll need the following OCaml packages: `ppx_deriving`, `batteries`, `ANSIterm
 
 Check out `src/incnat.ml` for a simple language with increment and assignment operations. It defines types `a` and `p` for the primitive parts of the language (one predicate, which tests whether a variable is greater than a number, and two actions, which increment and set variables).
 
-The code in `src/bool.ml` is for a simple language with boolean-valued variables.
+The code in `src/boolean.ml` is for a simple language with boolean-valued variables.
 
 The code in `src/ltlf.ml` is for a _higher-order theory_, wrapping a given theory with predicates for testing LTLf (past-time finite linear temporal logic) predicates.
 
