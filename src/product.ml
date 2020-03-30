@@ -1,8 +1,6 @@
 open Kat 
-open Syntax
 open Common
 open Hashcons
-open Range
 
 module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A.t) either and type P.t = (T1.P.t, T2.P.t) either ) = struct 
 
@@ -86,12 +84,12 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
         set 
         (BatSet.PSet.create K.Test.compare)
 
-    let rec subterms (a : K.A.t) = 
+    let subterms (a : K.A.t) = 
       match a with 
       | Left x -> convert_from_left (T1.subterms x)
       | Right y -> convert_from_right (T2.subterms y)
 
-    let rec push_back p a =
+    let push_back p a =
       match p,a with 
       | Left p, Left a -> convert_from_left (T1.push_back p a)
       | Right p, Right a -> convert_from_right (T2.push_back p a)
@@ -139,10 +137,10 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
         | Some z -> Some (from_test_right z)
         end
 
-    let merge (p1 : P.t) (p2 : P.t) : P.t = failwith "product merge undefined"
+    let merge (_p1 : P.t) (_p2 : P.t) : P.t = failwith "product merge undefined"
 
     (* TODO MMG 2020-02-28 we could have a real definition here... *)
-    let reduce a p = failwith "product reduce undefined"
+    let reduce _a _p = failwith "product reduce undefined"
 
     let variable p = 
       match p with 
@@ -162,7 +160,7 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | Theory (Right _) -> false 
       | Not x -> only_left x
       | PPar(x,y) | PSeq(x,y) -> (only_left x && only_left y)
-      | Placeholder i -> failwith "impossible"
+      | Placeholder _i -> failwith "impossible"
 
     let rec only_right (a : K.Test.t) : bool = 
       match a.node with  
@@ -170,7 +168,7 @@ module Product(T1 : THEORY) (T2: THEORY) : (THEORY with type A.t = (T1.A.t, T2.A
       | Theory (Left _) -> false 
       | Not x -> only_right x
       | PPar(x,y) | PSeq(x,y) -> (only_right x && only_right y)
-      | Placeholder i -> failwith "impossible"
+      | Placeholder _i -> failwith "impossible"
 
     let theory_to_z3_expr (a : A.t) (ctx : Z3.context) (map : Z3.Expr.expr StrMap.t) = 
       match a with 

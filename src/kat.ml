@@ -127,7 +127,7 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
     | One -> "true"
     | _ -> "(" ^ show_test_sum a ^ ")"
 
-  let rec show_term_sum p =
+  let rec show_term_sum (p:term) =
     match p.node with
     | Par (p1, p2) -> show_term_sum p1 ^ " + " ^ show_term_sum p2
     | Pred a -> show_test_sum a
@@ -274,14 +274,14 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
             if Test.compare x y < 0 then hashcons_pred (PSeq (x, y))
             else hashcons_pred (PSeq (y, x))
         | Some t -> t )
-      | Theory a, PSeq (({node= Theory d} as b), c) -> (
+      | Theory a, PSeq (({node= Theory d; _} as b), c) -> (
         match T.simplify_and a d with
         | None ->
             if Test.compare x b > 0 then pseq b (pseq x c)
             else hashcons_pred (PSeq (x, y))
         | Some t -> pseq t c )
       (* rewrite test sequences into semi-canonical form *)
-      | PSeq (p, q), PSeq (r, s)
+      | PSeq (p, _q), PSeq (r, s)
         when c_ord p s >= 0 ->
           pseq r (pseq s x)
       | PSeq (p, q), PSeq (r, s) when c_ord p r >= 0 && c_ord q s < 0 ->
@@ -292,15 +292,15 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
           pseq p (pseq r (pseq s q))
       | PSeq (p, q), PSeq (r, s) when c_ord q r >= 0 ->
           pseq p (pseq r (pseq q s))
-      | PSeq (p, q), PSeq (r, s) -> pseq p (pseq q y)
+      | PSeq (p, q), PSeq (_r, _s) -> pseq p (pseq q y)
       | _, PSeq (r, s) when x.tag = r.tag || x.tag = s.tag -> y
       | _, PSeq (r, s) when c_ord x s > 0 -> pseq r (pseq s x)
       | _, PSeq (r, s) when c_ord x r > 0 -> pseq r (pseq x s)
-      | _, PSeq (r, s) -> hashcons_pred (PSeq (x, y))
+      | _, PSeq (_r, _s) -> hashcons_pred (PSeq (x, y))
       | PSeq (p, q), _ when y.tag = q.tag || y.tag = p.tag -> x
       | PSeq (p, q), _ when c_ord y q > 0 -> pseq p (pseq q y)
       | PSeq (p, q), _ when c_ord y p > 0 -> pseq p (pseq y q)
-      | PSeq (p, q), _ -> hashcons_pred (PSeq (y, x))
+      | PSeq (_p, _q), _ -> hashcons_pred (PSeq (y, x))
       (* default case *)
       | _, _ ->
           if Test.compare x y < 0 then hashcons_pred (PSeq (x, y))
@@ -313,30 +313,30 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
 
   let pred x = hashcons_kat (Pred x)
 
-  let rec par x y =
+  let par x y =
     if x.tag == y.tag then x
     else
       match (x.node, y.node) with
-      | _, Pred {node= Zero} -> x
-      | Pred {node= Zero}, _ -> y
+      | _, Pred {node=Zero; _} -> x
+      | Pred {node=Zero; _}, _ -> y
       | Pred a, Pred b -> hashcons_kat (Pred (ppar a b))
       (* write 1 + p;p* as p* *)
-      | Pred {node= One}, Seq (p, ({node= Star q} as r))
+      | Pred {node=One; _}, Seq (p, ({node=Star q; _} as r))
         when p.tag == q.tag ->
           r
-      | Pred {node= One}, Seq (({node= Star q} as r), p) when p.tag == q.tag ->
+      | Pred {node=One; _}, Seq (({node=Star q; _} as r), p) when p.tag == q.tag ->
           r
-      | Seq (p, ({node= Star q} as r)), Pred {node= One} when p.tag == q.tag ->
+      | Seq (p, ({node=Star q; _} as r)), Pred {node=One; _} when p.tag == q.tag ->
           r
-      | Seq (({node= Star q} as r), p), Pred {node= One} when p.tag == q.tag ->
+      | Seq (({node=Star q; _} as r), p), Pred {node=One; _} when p.tag == q.tag ->
           r
       (* rewrite x + ax == x;(1 + a) == x *)
-      | Seq ({node= Pred _}, p), _
+      | Seq ({node=Pred _; _}, p), _
         when p.tag == y.tag ->
           p
-      | Seq (p, {node= Pred _}), _ when p.tag == y.tag -> p
-      | _, Seq ({node= Pred _}, p) when p.tag == x.tag -> p
-      | _, Seq (p, {node= Pred _}) when p.tag == x.tag -> p
+      | Seq (p, {node=Pred _; _}), _ when p.tag == y.tag -> p
+      | _, Seq ({node=Pred _; _}, p) when p.tag == x.tag -> p
+      | _, Seq (p, {node=Pred _; _}) when p.tag == x.tag -> p
       | _, _ -> hashcons_kat (Par (x, y))
 
 
@@ -347,21 +347,21 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
       when merge && T.variable p == T.variable q ->
         hashcons_kat (Action (i, T.merge p q))
     (* identities *)
-    | _, Pred {node= Zero} -> y
-    | Pred {node= Zero}, _ -> x
-    | _, Pred {node= One} -> x
-    | Pred {node= One}, _ -> y
+    | _, Pred {node=Zero; _} -> y
+    | Pred {node=Zero; _}, _ -> x
+    | _, Pred {node=One; _} -> x
+    | Pred {node=One; _}, _ -> y
     | Star p, Star q when p.tag == q.tag -> x
     (* rewrite x*; x; x* == x*; x *)
-    | Seq ({node= Star p}, q), Star r
+    | Seq ({node=Star p; _}, q), Star r
       when q.tag == p.tag && q.tag == r.tag ->
         x
-    | Star r, Seq ({node= Star p}, q) when q.tag == p.tag && q.tag == r.tag ->
+    | Star r, Seq ({node=Star p; _}, q) when q.tag == p.tag && q.tag == r.tag ->
         x
-    | Seq ({node= Star p}, q), Seq ({node= Star r}, s)
+    | Seq ({node=Star p; _}, q), Seq ({node=Star r; _}, s)
       when q.tag == p.tag && q.tag == r.tag ->
         seq x s
-    | Seq (s, {node= Star r}), Seq ({node= Star p}, q)
+    | Seq (s, {node=Star r; _}), Seq ({node=Star p; _}, q)
       when q.tag == p.tag && q.tag == r.tag ->
         seq s y
     | _, _ -> hashcons_kat (Seq (x, y))
@@ -370,7 +370,7 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
   let star x =
     match x.node with
     | Pred _ -> pred (one ())
-    | Star y -> x
+    | Star _y -> x
     | _ -> hashcons_kat (Star x)
 
 
@@ -400,7 +400,7 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
     | One | Zero | Placeholder _ -> StrMap.empty
     | Not b -> all_variables b
     | PPar (b, c) | PSeq (b, c) ->
-        StrMap.union (fun k v1 v2 -> Some v1) (all_variables b) (all_variables c)
+        StrMap.union (fun _k v1 _v2 -> Some v1) (all_variables b) (all_variables c)
     | Theory x -> StrMap.singleton (T.variable_test x) x
 
   let z3_satisfiable (a: Test.t) =

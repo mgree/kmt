@@ -123,23 +123,23 @@ module Make(Key: CollectionType)(Value : CollectionType) = struct
     let rec mem x = function
         Empty ->
           false
-      | Node(l, v, d, r, _) ->
+      | Node(l, v, _d, r, _) ->
           let c = Key.compare x v in
           c = 0 || mem x (if c < 0 then l else r)
 
     let rec min_binding = function
         Empty -> raise Not_found
-      | Node(Empty, x, d, r, _) -> (x, d)
-      | Node(l, x, d, r, _) -> min_binding l
+      | Node(Empty, x, d, _r, _) -> (x, d)
+      | Node(l, _x, _d, _r, _) -> min_binding l
 
     let rec max_binding = function
         Empty -> raise Not_found
-      | Node(l, x, d, Empty, _) -> (x, d)
-      | Node(l, x, d, r, _) -> max_binding r
+      | Node(_l, x, d, Empty, _) -> (x, d)
+      | Node(_l, _x, _d, r, _) -> max_binding r
 
     let rec remove_min_binding = function
         Empty -> invalid_arg "Map.remove_min_elt"
-      | Node(Empty, x, d, r, _) -> r
+      | Node(Empty, _x, _d, r, _) -> r
       | Node(l, x, d, r, _) -> bal (remove_min_binding l) x d r
 
     let merge t1 t2 =
@@ -153,7 +153,7 @@ module Make(Key: CollectionType)(Value : CollectionType) = struct
     let rec remove x = function
         Empty ->
           Empty
-      | Node(l, v, d, r, h) ->
+      | Node(l, v, d, r, _h) ->
           let c = Key.compare x v in
           if c = 0 then
             merge l r
@@ -166,24 +166,6 @@ module Make(Key: CollectionType)(Value : CollectionType) = struct
         Empty -> ()
       | Node(l, v, d, r, _) ->
           iter f l; f v d; iter f r
-
-    let rec map f = function
-        Empty ->
-          Empty
-      | Node(l, v, d, r, h) ->
-          let l' = map f l in
-          let d' = f d in
-          let r' = map f r in
-          Node(l', v, d', r', h)
-
-    let rec mapi f = function
-        Empty ->
-          Empty
-      | Node(l, v, d, r, h) ->
-          let l' = mapi f l in
-          let d' = f v d in
-          let r' = mapi f r in
-          Node(l', v, d', r', h)
 
     let rec fold f m accu =
       match m with
@@ -209,12 +191,12 @@ module Make(Key: CollectionType)(Value : CollectionType) = struct
 
     let rec add_min_binding k v = function
       | Empty -> singleton k v
-      | Node (l, x, d, r, h) ->
+      | Node (l, x, d, r, _h) ->
         bal (add_min_binding k v l) x d r
 
     let rec add_max_binding k v = function
       | Empty -> singleton k v
-      | Node (l, x, d, r, h) ->
+      | Node (l, x, d, r, _h) ->
         bal l x d (add_max_binding k v r)
 
     (* Same as create and bal, but no assumptions are made on the
@@ -263,14 +245,14 @@ module Make(Key: CollectionType)(Value : CollectionType) = struct
       | (Node (l1, v1, d1, r1, h1), _) when h1 >= height s2 ->
           let (l2, d2, r2) = split v1 s2 in
           concat_or_join (merge f l1 l2) v1 (f v1 (Some d1) d2) (merge f r1 r2)
-      | (_, Node (l2, v2, d2, r2, h2)) ->
+      | (_, Node (l2, v2, d2, r2, _h2)) ->
           let (l1, d1, r1) = split v2 s1 in
           concat_or_join (merge f l1 l2) v2 (f v2 d1 (Some d2)) (merge f r1 r2)
       | _ ->
           assert false
 
     let disjoint_union x y = 
-      merge (fun k o1 o2 -> 
+      merge (fun _k o1 o2 -> 
         match o1,o2 with 
         | Some _, _ -> o1 
         | _, Some _ -> o2

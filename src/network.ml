@@ -1,9 +1,7 @@
 open Kat
 open Common
 open Syntax
-open Hashcons
 open BatSet
-
 
 type field_val = 
   | Src of int 
@@ -42,7 +40,6 @@ let show_field_val sep fv =
   | Pt i -> "pt" ^ sep ^ (string_of_int i)
   | Sw i -> "sw" ^ sep ^ (string_of_int i)
 
-
 module rec Network : (THEORY with type A.t = field_val and type P.t = field_val) = struct 
   module K = KAT(Network)
 
@@ -73,9 +70,9 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
     | "<-", [EId s1; EId s2] -> Right (field_val_of_string s1 (int_of_string s2))
     | _, _ -> failwith ("Cannot create theory object from (" ^ name ^ ") and parameters")
 
-  let rec subterms (a: K.A.t) = PSet.singleton ~cmp:A.compare a
+  let subterms a = PSet.singleton ~cmp:Test.compare (K.theory a)
 
-  let rec push_back p a =
+  let push_back p a =
     match p, a with 
     | Src i, Src j 
     | Dst i, Dst j 
@@ -86,7 +83,7 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
         else PSet.create K.Test.compare
     | _, _ -> PSet.singleton ~cmp:K.Test.compare (K.theory a)
 
-  let merge x y = y
+  let merge _x y = y
 
   let reduce a p = 
     if equal_field_val a p then None 
@@ -94,17 +91,15 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
 
   let unbounded () = false
 
-  let subterms x = failwith "network subterms undefined"
-
   let variable x = get_field x
 
   let variable_test x = get_field x
 
-  let satisfiable x = failwith "network sat undefined"
+  let satisfiable _x = failwith "network sat undefined"
 
-  let theory_to_z3_expr a ctx map = failwith "network theory_to_z3_expr undefined"
+  let theory_to_z3_expr _f _ctx _map = failwith "network theory_to_z3_expr undefined"
   
-  let create_z3_var str ctx solver = failwith "network create_z3_var undefined"
+  let create_z3_var _str _ctx _solver = failwith "network create_z3_var undefined"
 
   let simplify_and x y = 
     match x,y with 
@@ -114,8 +109,8 @@ module rec Network : (THEORY with type A.t = field_val and type P.t = field_val)
     | Sw a, Sw b -> Some (if a = b then K.theory x else K.zero ())
     | _, _ -> None
 
-  let simplify_or x y = None 
+  let simplify_or _x _y = None 
 
-  let simplify_not x = None
+  let simplify_not _x = None
 
 end

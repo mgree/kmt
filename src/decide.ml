@@ -1,8 +1,6 @@
 open Kat
 open BatSet
 open Hashcons
-open Common
-open SafeSet
 open Automata
 open Word
 
@@ -35,12 +33,7 @@ module Decide (T : THEORY) = struct
 
   let singleton x = PSet.singleton ~cmp:compare_nf_elt x
 
-  let duplicate s i =
-    let acc = ref "" in
-    for j = 0 to i - 1 do acc := !acc ^ s done ;
-    !acc
-
-  let spaces i = duplicate " " (4 * i)
+  let spaces i = Stdlib.String.make (4 * i) ' '
 
   let show_nf (x: nf) : string =
     let ret =
@@ -99,7 +92,7 @@ module Decide (T : THEORY) = struct
         (fun acc (a, size) ->
           match acc with
           | None -> Some (a, size)
-          | Some (b, sizeb) -> if size > sizeb then Some (a, size) else acc )
+          | Some (_b, sizeb) -> if size > sizeb then Some (a, size) else acc )
         None choices
     in
     match pick with None -> failwith "impossible" | Some (a, _) -> a
@@ -181,10 +174,10 @@ module Decide (T : THEORY) = struct
       | Action (_, p), Theory a ->
           let x = K.push_back p a in
           PSet.map (fun t -> (t, m)) x
-      | Action (_, p), Not a ->
+      | Action (_, _p), Not a ->
           let nf = push_back_dot (i + 1) m a in
           let sum =
-            PSet.fold (fun (test, term) acc -> K.ppar test acc) nf zero
+            PSet.fold (fun (test, _term) acc -> K.ppar test acc) nf zero
           in
           let b = nnf (K.not sum) in
           singleton (b, m)
@@ -264,7 +257,7 @@ module Decide (T : THEORY) = struct
             (*            if K.unbounded () || true then *)
               let term =
                 PSet.fold
-                  (fun (test, term) acc -> K.par acc term)
+                  (fun (_test, term) acc -> K.par acc term)
                   x
                   (K.pred (K.zero ()))
               in
@@ -303,7 +296,7 @@ module Decide (T : THEORY) = struct
     ret
 
 
-  and fix (i: int) (nf: nf) : nf * int * int =
+  and fix (_i: int) (nf: nf) : nf * int * int =
     let eq curr (prev, _) = PSet.equal curr prev in
     let rec aux prevs =
       let prev, i = List.hd prevs in
@@ -320,7 +313,7 @@ module Decide (T : THEORY) = struct
   and repeatSeq (i: int) (x: nf) (count: int) : nf =
     let xs : nf ref = ref (singleton (one, K.pred one)) in
     let acc : nf ref = xs in
-    for j = 1 to count do
+    for _j = 1 to count do
       xs := push_back_j i !xs x ;
       acc := nf_union !xs !acc
     done ;
@@ -374,10 +367,10 @@ module Decide (T : THEORY) = struct
       if i = n
       then acc
       else
-        let (a,_) as clause =
+        let clause =
           if Bits.mem sel i
           then x.(i)
-          else let (a,p) = x.(i) in
+          else let (a,_p) = x.(i) in
                (K.not a, K.pred (K.zero ()))
         in
         (* no pruning here---if a=0, leave it in and we'll clear it up in the locally_unambiguous form *)

@@ -2,6 +2,9 @@ language: c
 sudo: required
 env:
   - OCAML_VERSION=4.07
+  - OCAML_VERSION=4.08
+  - OCAML_VERSION=4.09
+  - OCAML_VERSION=4.10
 
 cache:
   directories:
@@ -16,7 +19,8 @@ before_install:
   - LD_LIBRARY_PATH="$HOME/.opam/ocaml-base-compiler.4.07.1/lib/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
-  - opam config exec -- make
-  - opam config exec -- make test
-  - opam config exec -- make eval
+  - opam config exec -- dune build src/main.exe
+  - opam config exec -- dune exec src/test_equivalence.exe
+  - opam config exec -- dune exec src/test_word.exe
+
 

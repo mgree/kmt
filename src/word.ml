@@ -1,4 +1,3 @@
-open BatSet
 open Hashcons
 open Common
 

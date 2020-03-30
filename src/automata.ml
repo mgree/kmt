@@ -1,8 +1,6 @@
 open Kat
 open Common
-open Syntax
 open Hashcons
-open Reindex
 
 let automata_log_src = Logs.Src.create "kmt.automata"
                        ~doc:"logs automata operations"
@@ -157,12 +155,13 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
 
   let rec observation (term: K.Term.t) =
     match term.node with
-    | Action (i, p) -> K.zero ()
+    | Action (_i, _p) -> K.zero ()
     | Pred a -> observation_test a
     | Par (a, b) -> K.ppar (observation a) (observation b)
     | Seq (a, b) -> K.pseq (observation a) (observation b)
-    | Star a -> K.one ()
+    | Star _a -> K.one ()
 
+(*               
   let rec derivative_test (test: K.Test.t) : DerivativeSet.t =
     match test.node with
     | Not _ -> failwith "Impossible: [(Not _) case in derivative]"
@@ -174,11 +173,12 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         let l = dotr (derivative_test a) (K.pred b) in
         let r = dotl (observation (K.pred a)) (derivative_test b) in
         DerivativeSet.union l r
-
+ *)
+               
   let rec derivative (term: K.Term.t) : DerivativeSet.t =
     match term.node with
-    | Action (i, p) -> DerivativeSet.singleton (K.one (), i, K.pred (K.one ()))
-    | Pred a -> DerivativeSet.empty ()
+    | Action (i, _p) -> DerivativeSet.singleton (K.one (), i, K.pred (K.one ()))
+    | Pred _a -> DerivativeSet.empty ()
     | Par (a, b) -> DerivativeSet.union (derivative a) (derivative b)
     | Seq (q, r) ->
         DerivativeSet.union
@@ -201,11 +201,11 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | Not a -> K.not (replace_test a map)
     | PPar (a, b) -> K.ppar (replace_test a map) (replace_test b map)
     | PSeq (a, b) -> K.pseq (replace_test a map) (replace_test b map)
-    | Theory a -> K.placeholder (TestNatMap.find test map)
+    | Theory _a -> K.placeholder (TestNatMap.find test map)
 
   let rec replace_term (term: K.Term.t) (map: TestNatMap.t) : K.Term.t =
     match term.node with
-    | Action (i, p) -> term
+    | Action (_i, _p) -> term
     | Star a -> K.star (replace_term a map)
     | Par (a, b) -> K.par (replace_term a map) (replace_term b map)
     | Seq (a, b) -> K.seq (replace_term a map) (replace_term b map)
@@ -216,7 +216,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
     | Placeholder _ -> failwith "build_map_test"
     | Zero | One -> TestNatMap.empty ()
     | Not a -> build_map_test a i
-    | Theory a ->
+    | Theory _a ->
         let ret = TestNatMap.singleton test !i in
         incr i ; ret
     | PPar (a, b) | PSeq (a, b) ->
@@ -224,7 +224,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
 
   let rec build_map (term: K.Term.t) (i: int ref) : TestNatMap.t =
     match term.node with
-    | Action (i, p) -> TestNatMap.empty ()
+    | Action (_i, _p) -> TestNatMap.empty ()
     | Star a -> build_map a i
     | Par (a, b) | Seq (a, b) ->
         TestNatMap.disjoint_union (build_map a i) (build_map b i)
@@ -237,8 +237,8 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
 
   let rec characters (term: K.Term.t) : ActionSet.t =
     match term.node with
-    | Action (i, p) -> ActionSet.singleton p
-    | Pred a -> ActionSet.empty ()
+    | Action (_i, p) -> ActionSet.singleton p
+    | Pred _a -> ActionSet.empty ()
     | Par (a, b) | Seq (a, b) -> ActionSet.union (characters a) (characters b)
     | Star a -> characters a
 
@@ -470,7 +470,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
                 TSPairSet.iter
                   (fun (a, l1) ->
                     TSPairSet.iter
-                      (fun (b, l2) ->
+                      (fun (_b, l2) ->
                         (* Log.debug (fun m -> m "  iter: a=%s, b=%s, l1=%s, l2=%s" (K.Test.show a) (K.Test.show b) (StateSet.show l1) (StateSet.show l2)); *)
                         let next_states = cross l1 l2 in
                         let new_test = replace a accept_test placeholder in
@@ -506,13 +506,15 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
       | Node of K.Test.t * StateSet.t * minterm_tree * minterm_tree
       | Leaf
 
+      (*
     let rec show_tree (t: minterm_tree) : string =
       match t with
       | Leaf -> "Leaf"
       | Node (t, ls, left, right) ->
           Printf.sprintf "Node(%s,%s,%s,%s)" (K.Test.show t) (StateSet.show ls)
             (show_tree left) (show_tree right)
-
+       *)
+      
     let rec refine (t: minterm_tree) (a: K.Test.t) (l: StateSet.t) =
       match t with
       | Node (b, ls, left, right) ->
@@ -649,7 +651,7 @@ module Automata (K : KAT_IMPL) : KAT_AUTOMATA with module K = K = struct
         let dkl = derivative cont in
         (* Log.debug (fun m -> m "Continuation for %d is %s" l (K.Term.show cont));
         Log.debug (fun m -> m "Derivative for %d is %s" l (DerivativeSet.show dkl)); *)
-        let transitions ((d, l, k): DerivativeSet.elt) acc =
+        let transitions ((d, l, _k): DerivativeSet.elt) acc =
           let action = NatActionMap.find l amap in
           (* Log.debug (fun m -> m "  Adding action: (%s,%s)" (K.Test.show d) (K.P.show action)); *)
           if d = K.zero () then acc

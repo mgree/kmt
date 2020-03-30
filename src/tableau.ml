@@ -1,9 +1,4 @@
-open Batteries;;
-include BatSet;;
-include BatMap;;
-include Format;;
-include String;;
-  
+open Batteries
 
 (*  LTL SYNTAX, full *)
 module LTL = struct
@@ -69,52 +64,52 @@ module LTL = struct
   ;;
   let isImp phi =
     match phi with
-      (Imp(x,y)) -> true
+      (Imp(_x,_y)) -> true
     | _ -> false
   ;;
   let isAnd phi =
     match phi with
-      And(x,y) -> true
+      And(_x,_y) -> true
     | _ -> false
   ;;
   let isOr phi =
     match phi with
-      Or(x,y) -> true
+      Or(_x,_y) -> true
     | _ -> false
   ;;
   let isNot phi =
     match phi with
-      (Not x) -> true
+      (Not _x) -> true
     | _ -> false
   ;;
   let isX phi =
     match phi with
-      (X x) -> true
+      (X _x) -> true
     | _ -> false
   ;;
   let isWX phi =
     match phi with
-      (WX x) -> true
+      (WX _x) -> true
     | _ -> false
   ;;
   let isG phi =
     match phi with
-      (G x) -> true
+      (G _x) -> true
     | _ -> false
   ;;
   let isE phi =
     match phi with
-      (E x) -> true
+      (E _x) -> true
     | _ -> false
   ;;
   let isW phi =
     match phi with
-      W(x,y) -> true
+      W(_x,_y) -> true
     | _ -> false
   ;;
   let isU phi =
     match phi with
-      U(x,y) -> true
+      U(_x,_y) -> true
     | _ -> false
   ;;
   let isClass phi =

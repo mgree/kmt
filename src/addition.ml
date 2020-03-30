@@ -2,7 +2,6 @@ open Kat
 open Syntax
 open Common
 open Hashcons
-open Range
 
 type a = Lt of string * int | Gt of string * int [@@deriving eq]
 
@@ -103,22 +102,22 @@ module rec Addition : THEORY with type A.t = a and type P.t = p = struct
   let simplify_not a =
     match a with
     | Gt (x, v) -> Some (K.theory (Lt (x, v + 1)))
-    | Lt (x, 0) -> Some (K.one ())
+    | Lt (_x, 0) -> Some (K.one ())
     | Lt (x, v) -> Some (K.theory (Gt (x, v - 1)))
 
 
-  let simplify_or a b = None
+  let simplify_or _a _b = None
 
   let merge (p1: P.t) (p2: P.t) : P.t =
-    match (p1, p2) with Increment (x, i), Increment (y, j) ->
-      Increment (x, i + j)
+    match (p1, p2) with
+      Increment (x, i), Increment (_y, j) -> Increment (x, i + j)
 
 
-  let reduce a p = Some p
+  let reduce _a p = Some p
 
   let unbounded () = true
 
-  let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
+  let create_z3_var (str,_a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
     let sym = Z3.Symbol.mk_string ctx str in
     let int_sort = Z3.Arithmetic.Integer.mk_sort ctx in
     let xc = Z3.Expr.mk_const ctx sym int_sort in
@@ -148,7 +147,7 @@ module rec Addition : THEORY with type A.t = a and type P.t = p = struct
     | One | Zero | Placeholder _ | Theory _ -> true
     | PPar _ -> false
     | PSeq (b, c) -> can_use_fast_solver b && can_use_fast_solver c
-    | Not {node= Theory _} -> true
+    | Not {node=Theory _; _} -> true
     | Not _ -> false
 
   let satisfiable (a: K.Test.t) =

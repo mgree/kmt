@@ -45,8 +45,8 @@ let rec unroll_star_l (w: word) : word =
   match w.node with
   | Str w_inner -> alt (cat w w_inner) eps
   | Emp | Eps | Ltr _ -> w
-  | Alt (w1, w2) -> alt (unroll_star_r w1) (unroll_star_r w2)
-  | Cat (w1, w2) -> cat (unroll_star_r w1) (unroll_star_r w2)
+  | Alt (w1, w2) -> alt (unroll_star_l w1) (unroll_star_l w2)
+  | Cat (w1, w2) -> cat (unroll_star_l w1) (unroll_star_l w2)
 
 let debug_mode () =
   Logs.Src.set_level word_log_src (Some Logs.Debug);

@@ -1,31 +1,35 @@
-; (install
-;   (section bin)
-;   (files (main.exe as kmt)))
-
 (executable
  (name main)
- (libraries batteries str unix ANSITerminal
-            fmt fmt.cli fmt.tty logs logs.fmt logs.cli
-            z3)
+ (modules main)
+ (libraries kmt fmt fmt.cli fmt.tty logs logs.fmt logs.cli cmdliner)
  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
  (flags -thread (-cclib -lstdc++)))
 
-;(test
-;  (name test_equivalence)
-;  (libraries batteries str unix ANSITerminal
-;             fmt fmt.cli fmt.tty alcotest logs logs.fmt logs.cli
-;             z3)
-;  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
-;  (flags -thread (-cclib -lstdc++)))
+(test
+ (name test_equivalence)
+ (modules test_equivalence)
+ (libraries kmt alcotest)
+ (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+ (flags -thread (-cclib -lstdc++)))
 
-;(test
-; (name test_word)
-; 
-; (libraries batteries str unix ANSITerminal
-;            fmt fmt.cli fmt.tty alcotest logs logs.fmt logs.cli
-;            z3)
-; (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
-; (flags -thread (-cclib -lstdc++)))
+(test
+ (name test_word)
+ (modules test_word)
+ (libraries kmt alcotest)
+ (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+ (flags -thread (-cclib -lstdc++)))
+
+(library
+ (name kmt)
+ (wrapped false)
+ (modules :standard \ main test_equivalence test_word)
+ (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+ (libraries batteries str unix ANSITerminal fmt fmt.cli fmt.tty
+            alcotest logs logs.fmt logs.cli z3))
 
 (ocamllex lexer)             
 (ocamlyacc parser)
+
+(env
+  (dev
+    (flags (:standard -warn-error +A-9-32))))

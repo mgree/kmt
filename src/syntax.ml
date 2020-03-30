@@ -17,4 +17,4 @@ let rec expr_to_string e =
   | ESeq(e1,e2) -> expr_to_string e1 ^ ";" ^ expr_to_string e2
   | EStar e1 -> "(" ^ expr_to_string e1 ^ ")*"
   | ENot e1 -> "-" ^ expr_to_string e1
-  | ETheory(name, es) -> name ^ "(..)"
+  | ETheory(name, _es) -> name ^ "(..)"

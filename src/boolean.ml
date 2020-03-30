@@ -2,7 +2,6 @@ open Kat
 open Syntax
 open Common
 open Hashcons
-open Range
                       
 type a = Bool of string * bool [@@deriving eq]
 
@@ -78,21 +77,19 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     | _ -> PSet.singleton ~cmp:K.Test.compare (K.theory a)
 
 
-  let rec subterms x = PSet.singleton ~cmp:K.Test.compare (K.theory x)
+  let subterms x = PSet.singleton ~cmp:K.Test.compare (K.theory x)
 
   let simplify_and (Bool (x, v1)) (Bool (y, v2)) =
     if x = y && v1 <> v2 then Some (K.zero ()) else None
 
-
   let simplify_or (Bool (x, v1)) (Bool (y, v2)) =
     if x = y && v1 <> v2 then Some (K.one ()) else None
 
-
   let simplify_not (Bool (x, v)) = Some (K.theory (Bool (x, not v)))
 
-  let merge (p1: P.t) (p2: P.t) : P.t = p2
+  let merge (_p1: P.t) (p2: P.t) : P.t = p2
 
-  let reduce a p = Some p
+  let reduce _a p = Some p
 
   let unbounded () = false
 
@@ -102,7 +99,7 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     let value = Z3.Boolean.mk_val ctx v in
     Z3.Boolean.mk_eq ctx var value
 
-  let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr =
+  let create_z3_var (str,_a) (ctx : Z3.context) (_solver : Z3.Solver.solver) : Z3.Expr.expr =
     let sym = Z3.Symbol.mk_string ctx str in
     let bool_sort = Z3.Boolean.mk_sort ctx in
     Z3.Expr.mk_const ctx sym bool_sort 
@@ -116,7 +113,7 @@ module rec Boolean : THEORY with type A.t = a and type P.t = p = struct
     | One | Zero | Placeholder _ | Theory _ -> true
     | PPar _ -> false
     | PSeq (b, c) -> can_use_fast_solver b && can_use_fast_solver c
-    | Not {node= Theory _} -> true
+    | Not {node=Theory _; _} -> true
     | Not _ -> false
              
   let satisfiable (a: K.Test.t) =

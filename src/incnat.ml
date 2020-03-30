@@ -2,7 +2,6 @@ open Kat
 open Syntax
 open Common
 open Hashcons
-open Range
            
 type a = Gt of string * int [@@deriving eq]
 
@@ -69,7 +68,7 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
 
   let push_back p a =
     match (p,a) with
-    | (Increment x, Gt (_, j)) when 1 > j -> PSet.singleton ~cmp:K.Test.compare (K.one ())
+    | (Increment _x, Gt (_, j)) when 1 > j -> PSet.singleton ~cmp:K.Test.compare (K.one ())
     | (Increment x, Gt (y, j)) when x = y ->
        PSet.singleton ~cmp:K.Test.compare (K.theory (Gt (y, j - 1)))
     | (Assign (x,i), Gt (y,j)) when x = y -> PSet.singleton ~cmp:K.Test.compare (if i > j then K.one () else K.zero ())
@@ -88,17 +87,17 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
     | _, _ -> None
 
 
-  let simplify_not a = None
+  let simplify_not _a = None
 
-  let simplify_or a b = None
+  let simplify_or _a _b = None
 
-  let merge (p1: P.t) (p2: P.t) : P.t = p2
+  let merge (_p1: P.t) (p2: P.t) : P.t = p2
 
-  let reduce a p = Some p
+  let reduce _a p = Some p
 
   let unbounded () = true
 
-  let create_z3_var (str,a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
+  let create_z3_var (str,_a) (ctx : Z3.context) (solver : Z3.Solver.solver) : Z3.Expr.expr = 
     let sym = Z3.Symbol.mk_string ctx str in
     let int_sort = Z3.Arithmetic.Integer.mk_sort ctx in
     let xc = Z3.Expr.mk_const ctx sym int_sort in
@@ -124,7 +123,7 @@ module rec IncNat : THEORY with type A.t = a and type P.t = p = struct
     | One | Zero | Placeholder _ | Theory _ -> true
     | PPar _ -> false
     | PSeq (b, c) -> can_use_fast_solver b && can_use_fast_solver c
-    | Not {node= Theory _} -> true
+    | Not {node= Theory _; _} -> true
     | Not _ -> false
 
   let satisfiable (a: K.Test.t) =

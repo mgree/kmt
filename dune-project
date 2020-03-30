@@ -1,2 +1,3 @@
-(lang dune 1.1)
+(lang dune 1.11)
 (name kmt)
+(version 0.1)

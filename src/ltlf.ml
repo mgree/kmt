@@ -1,6 +1,5 @@
 open Kat
 open Common
-open Syntax
 open Hashcons
 
 type 'a ltlf =
@@ -14,18 +13,37 @@ struct
   module rec Implementation :
     THEORY with type A.t = T.A.t ltlf and type P.t = T.P.t =
   struct
-    module K = KAT (Implementation)
+    module K = KAT(Implementation)
     module Test = K.Test
     module Term = K.Term
     module P = T.P
 
+    let name () = "ltlf(" ^ T.name () ^ ")"
+             
     let hash_ltlf x =
       match x with
       | Base a -> T.A.hash a
       | Last a -> 3 * K.Test.hash a + 11
       | Since (a, b) -> 7 * K.Test.hash a + 11 * K.Test.hash b + 17
 
+    let unbounded () = T.unbounded ()
 
+    let variable _p =
+      failwith "variable undefined for ltlf"
+                 
+    let variable_test _a =
+      failwith "variable_test undefined for ltlf"
+
+    let reduce _a _p = None
+
+    let merge _p1 p2 = p2
+      
+    let theory_to_z3_expr _a (_ctx : Z3.context) (_map : Z3.Expr.expr StrMap.t) =
+      failwith "theory_to_z3_expr undefined for ltlf"
+
+    let create_z3_var (_str,_a) (_ctx : Z3.context) (_solver : Z3.Solver.solver)  : Z3.Expr.expr =
+      failwith "create_z3_var undefined for ltlf"
+      
     let base x = Base x
 
     let last x = Last x
@@ -58,7 +76,6 @@ struct
         | Right v -> Right v
         | Left v -> Left (base v)
 
-
     open BatSet
 
     let rec from_test (a: T.K.Test.t) : K.Test.t =
@@ -71,8 +88,7 @@ struct
       | PSeq (x, y) -> K.pseq (from_test x) (from_test y)
       | Placeholder i -> K.placeholder i
 
-
-    let rec subterms (a: K.A.t) =
+    let subterms (a: K.A.t) =
       match a with
       | Base x -> PSet.map from_test (T.subterms x)
       | Last x -> PSet.add (K.theory a) (K.subterms x)
@@ -80,7 +96,7 @@ struct
           PSet.union (K.subterms x) (K.subterms y) |> PSet.add (K.theory a)
 
 
-    let rec push_back p t =
+    let push_back p t =
       match t with
       | Base x ->
           let pbs = T.push_back p x in
@@ -93,14 +109,13 @@ struct
           let x2 = PSet.map (fun a -> K.pseq a (K.theory t)) x2 in
           PSet.union x1 x2
 
+    let simplify_or _a _b = None
 
-    let simplify_or a b = None
+    let simplify_and _a _b = None
 
-    let simplify_and a b = None
+    let simplify_not _a = None
 
-    let simplify_not a = None
-
-    let satisfiable (a: Test.t) : bool = failwith "not implemented"
+    let satisfiable (_a: Test.t) : bool = failwith "not implemented"
   end
 
   include Implementation

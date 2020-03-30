@@ -16,10 +16,6 @@ end
 
 type ('a, 'b) either = Left of 'a | Right of 'b
 
-let left x = function Left x -> x | Right _ -> failwith "Either [left]"
-
-let right x = function Right x -> x | Left _ -> failwith "Either [right]"
-
 (* Helper functions for dealing with 
   the standard library option type *)
 
