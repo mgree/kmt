@@ -121,7 +121,10 @@ module TestAddition (T : TESTER) = struct
          "true + x>0;inc(x,1);inc(x,1)*"; 
       assert_not_equivalent "test in loop 2" 
          "(inc(x,1);x>1)*"
-         "true + inc(x,1);inc(x,1)*"
+         "true + inc(x,1);inc(x,1)*";
+      assert_equivalent "x>3;not (x>2) = false (regression)"
+         "x>3; not (x>2)"
+         "false"      
     ]
 end
 
@@ -180,8 +183,14 @@ module TestIncNat (T : TESTER) = struct
          "set(x,5)";
       assert_not_equivalent "tracing" 
          "(inc(x))*;set(x,0)"
-         "set(x,0)"
-    ]
+         "set(x,0)"]
+    @ if mode = Automata
+      then [] (* BUG MMG 2020-03-30 *)
+      else [ 
+          assert_equivalent "x>3;not (x>2) = false (regression)"
+            "x>3; not (x>2)"
+            "false"
+        ]
 end
 
 module TestBoolean (T : TESTER) = struct
@@ -226,7 +235,7 @@ module TestBoolean (T : TESTER) = struct
         "(set(x,T) + set(y,T) + set(x,F) + set(y,T))*"
         "(set(x,F) + set(y,T) + set(x,T) + set(y,T))*"
     ] @ (if mode = Automata
-         then []
+         then [] (* just way, way too slow *)
          else [ assert_equivalent "tree ordering"
                   "set(w,F); set(x,T); set(y,F); set(z,F); ((w=T + x=T + y=T + z=T); set(a,T) + (not (w=T + x=T + y=T + z=T)); set(a,F))"
                   "set(w,F); set(x,T); set(y,F); set(z,F); (((w=T + x=T) + (y=T + z=T)); set(a,T) + (not ((w=T + x=T) + (y=T + z=T))); set(a,F))"
@@ -265,10 +274,14 @@ module TestProduct (T : TESTER) = struct
         "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)";
       assert_equivalent ~speed:slow "population count 3 (variant)"
         "y<1; (a=F + a=T; inc(y,1)); (b=F + b=T; inc(y,1)); (c=F + c=T; inc(y,1)); y>2"
-        "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)";
-(*      assert_not_equivalent "population count: mismatched domain (regression)"
-       "y<1; (a=F + a=T; inc(y,1)); not (y < 1)" "a=T;inc(y,1)" *)
-    ]
+        "y<1; a=T; b=T; c=T; inc(y,1); inc(y,1); inc(y,1)"
+    ] @ if mode = Automata
+        then [] (* BUG MMG 2020-03-30 *)
+        else [
+            assert_not_equivalent "population count: mismatched domain (regression)"
+              "y<1; (a=F + a=T; inc(y,1)); not (y < 1)"
+              "a=T;inc(y,1)"
+          ]
                                             
 end
                                 
