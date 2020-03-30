@@ -135,12 +135,24 @@ let find_state (m: state WordMap.t) (w: word) : state =
   | Some state -> state
            
 exception Acceptance_mismatch of word * word
-          
+
+let check_acceptance m w1 w2 =
+  Log.debug (fun m -> m "checking acceptance of %s and %s"
+                        (Word.show w1) (Word.show w2));
+  if accepting w1 <> accepting w2
+  then raise (Acceptance_mismatch (w1, w2))
+  else
+    let st1 = find_state m w1 in
+    let st2 = find_state m w2 in
+    if not (UF.equal st1 st2)
+    then begin
+        UF.unite st1 st2;
+        [(w1,w2)]
+      end
+    else []
+                               
 let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
   let m : state WordMap.t = WordMap.create 16 in
-  let start1 = find_state m w1 in
-  let start2 = find_state m w2 in
-  UF.unite start1 start2;
   let rec loop (l: (word * word) list) : bool =
     match l with
     | [] -> true (* all done! *)
@@ -149,34 +161,26 @@ let equivalent_words (w1: word) (w2: word) (sigma: int) : bool =
          if c = sigma
          then []
          else begin
-             Log.debug (fun m -> m "comparing %s and %s on %s\n" (Word.show w1) (Word.show w2) (show_letter c));
+             Log.debug (fun m -> m "comparing %s and %s on %s"
+                                   (Word.show w1) (Word.show w2) (show_letter c));
              let w1c = derivative w1 c in
              let w2c = derivative w2 c in
-             Log.debug (fun m -> m "comparing %s and %s on %s\n" (Word.show w1) (Word.show w2) (show_letter c));
-             let st1 = find_state m w1c in
-             let st2 = find_state m w2c in
-             let push =
-               if accepting w1c <> accepting w2c
-               then raise (Acceptance_mismatch (w1c, w2c))
-               else if not (UF.equal st1 st2)
-               then begin
-                   Log.debug (fun m -> m "uniting...\n");                          
-                   UF.unite st1 st2;
-                   [(w1c,w2c)]
-                 end
-               else []
-               in
-               push @ inner (c+1)
+             Log.debug (fun m -> m "got derivatives %s and %s"
+                                   (Word.show w1c) (Word.show w2c));
+             check_acceptance m w1c w2c @ inner (c+1)
            end
        in
-       try
-         let app = inner 0 in
-         Log.debug (fun m -> m "added %s\n" (show_list (fun (w1,w2) -> "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")") app));
-         loop (l' @ app)
-       with Acceptance_mismatch (w1, w2) ->
-         begin
-           Log.debug (fun m -> m "%s and %s mismatch\n" (Word.show w1) (Word.show w2));
-           false
-         end
+       let app = inner 0 in
+       Log.debug (fun m -> m "added %s" (show_list (fun (w1,w2) -> "(" ^ Word.show w1 ^ ", " ^ Word.show w2 ^ ")") app));
+       loop (l' @ app)
   in
-  loop [(w1, w2)]
+  try loop (check_acceptance m w1 w2)
+  with Acceptance_mismatch _ ->
+    begin
+      Log.debug (fun m -> m "%s and %s mismatch\n" (Word.show w1) (Word.show w2));
+      false
+    end
+
+let same_words (w1: word) (w2: word) : bool =
+  let sigma = max (num_letters w1) (num_letters w2) + 1 in
+  equivalent_words w1 w2 sigma

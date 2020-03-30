@@ -1,5 +1,3 @@
-- lanf -> lunf
-
 - Logging
   + Tagging of topics (e.g., sat, other stuff...)
 
@@ -10,11 +8,9 @@
   (can you define a recursive function with a module return type?)
 
 - Testing
-  + Negative examples of word equality
-  + Frontends
+  + Frontend
   + Bring automata and normalization in line
     * Property-based testing
-    * Scour old thread for example of where automata is failing
     * Option to use `same_actions_automata` in decide.ml
   + Fix eval to be nicer
 

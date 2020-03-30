@@ -1,10 +1,6 @@
 open Common
 open Word
 open Alcotest
-
-let same_words (w1: word) (w2: word) : bool =
-  let sigma = max (num_letters w1) (num_letters w2) in
-  equivalent_words w1 w2 sigma
    
 (* TODO better pretty printing *)
 let equiv : word testable =
@@ -12,7 +8,9 @@ let equiv : word testable =
   testable pp same_words
 
 let check_equivalent = check equiv "equivalent"
-  
+
+let check_inequivalent = check (neg equiv) "inequivalent"
+
 let small_words = [
     emp
   ; eps
@@ -50,37 +48,59 @@ let rec unroll_star_l (w: word) : word =
   | Alt (w1, w2) -> alt (unroll_star_r w1) (unroll_star_r w2)
   | Cat (w1, w2) -> cat (unroll_star_r w1) (unroll_star_r w2)
 
+let debug_mode () =
+  Logs.Src.set_level word_log_src (Some Logs.Debug);
+  Logs.set_reporter (Logs_fmt.reporter ())
+                  
 let main () =
+  debug_mode ();
   run "word equivalence of regular expressions" [
       "reflexivity",
-      words |>
-        List.map (fun w ->
-            test_case ("reflexivity (" ^ Word.show w ^ ")") `Quick
-              (fun () -> check_equivalent w w))
+      [test_case ("reflexivity (" ^ string_of_int (List.length words) ^ " cases)") `Quick
+         (fun () -> words |> List.iter (fun w -> check_equivalent w w))]
     ; "symmetry",
-      unique_pairs words |>
-        List.map (fun (w1, w2) ->
-            test_case ("symmetry (" ^ Word.show w1 ^ " and " ^ Word.show w2 ^ ")") `Quick
-              (fun () -> check bool "same answer" (same_words w1 w2) (same_words w2 w1)))
+      begin
+        let pairs = unique_pairs words in
+        [test_case ("w1 = w2 <-> w2 = w1 (" ^ string_of_int (List.length pairs) ^ " cases)") `Quick
+           (fun () -> pairs
+                      |> List.iter (fun (w1, w2) ->
+                             check bool ("same answer for " ^ Word.show w1 ^ " and " ^ Word.show w2)
+                               (same_words w1 w2) (same_words w2 w1)))]
+      end
     ; "star unrolling (w* = 1 + ww*)",
-      star_free_words |> strs |>
-        List.map (fun w ->
-            test_case ("star unrolling (" ^ Word.show w ^ ")") `Quick
-              (fun () -> check_equivalent w (unroll_star_r w)))
+      begin
+        let ws = star_free_words |> strs in
+        [test_case ("w = unroll w (" ^ string_of_int (List.length ws) ^ " cases)") `Quick
+           (fun () -> ws |> List.iter (fun w -> check_equivalent w (unroll_star_r w)))]
+      end
     ; "star unrolling (w* = w*w + 1)",
-      star_free_words |> strs |>
-        List.map (fun w ->
-            test_case ("star unrolling (" ^ Word.show w ^ ")") `Quick
-              (fun () -> check_equivalent w (unroll_star_l w)))
+      begin
+        let ws = star_free_words |> strs in
+        [test_case ("w = unroll w (" ^ string_of_int (List.length ws) ^ " cases)") `Quick
+           (fun () -> ws |> List.iter (fun w -> check_equivalent w (unroll_star_l w)))]
+      end
+    ; "inequivalences",
+      [ test_case "true != false" `Quick (fun () -> check_inequivalent eps emp)
+      ; test_case "pi_0 != pi_1" `Quick (fun () -> check_inequivalent (ltr 0) (ltr 1))
+      ; test_case "pi_0 != pi_0 + pi_1" `Quick
+          (fun () -> check_inequivalent (ltr 0) (alt (ltr 0) (ltr 1)))
+      ; test_case "pi_0* != pi_0*" `Quick
+          (fun () -> check_inequivalent (ltr 0) (str (ltr 1)))
+      ; begin
+          let ws = star_free_words |> strs in
+          test_case ("w* != false (" ^ string_of_int (List.length ws) ^ " cases)") `Quick
+            (fun () -> ws |> List.iter (fun w -> check_inequivalent w emp))
+        end
+      ]
     ; let w = str (alt (ltr 0) (alt emp (ltr 1))) in
-      "debugging slowness", [
-          test_case "reflexivity (pi_0 + false + pi_1 )*" `Quick
+      "debugging slowness (w = (pi_0 + false + pi_1)*)", [
+          test_case "reflexivity on w" `Quick
             (fun () -> check_equivalent w w)
-        ; test_case "reflexivity (pi_0 + false + pi_1 )**" `Quick
+        ; test_case "reflexivity on w*" `Quick
             (fun () -> check_equivalent (str w) (str w))
-        ; test_case "star unrolling (w* = 1 + ww*)" `Quick
+        ; test_case "right unrolling (w* = 1 + ww*)" `Quick
             (fun () -> check_equivalent w (unroll_star_r w))
-        ; test_case "star unrolling (w* = w*w + 1)" `Slow
+        ; test_case "left unrolling (w* = w*w + 1)" `Slow
             (fun () -> check_equivalent w (unroll_star_l w))
       ]
     ]

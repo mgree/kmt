@@ -22,8 +22,8 @@ module Decide (T : THEORY) = struct
 
   type nf = nf_elt PSet.t
 
-  (* locally ambiguous... same type, but useful as documentation *)
-  type lanf = nf
+  (* locally unambiguous... same type, but useful as documentation *)
+  type lunf = nf
           
   let compare_test (a: K.Test.t) (b: K.Test.t) = a.tag - b.tag
 
@@ -385,7 +385,7 @@ module Decide (T : THEORY) = struct
     in
     go 0 (empty ())
     
-  let locally_unambiguous_form (x: nf) : lanf =
+  let locally_unambiguous_form (x: nf) : lunf =
     let summands  = PSet.to_array x in
     let n         = Array.length summands in
     Log.debug (fun m -> m "translating %d summands in locally unambiguous form for %s" n (show_nf x));
@@ -510,7 +510,7 @@ module Decide (T : THEORY) = struct
     
   (* ACTUAL EQUIVALENCE ROUTINE STARTS HERE *)
     
-  let equivalent_lanf (xhat: lanf) (yhat: lanf) : bool =
+  let equivalent_lunf (xhat: lunf) (yhat: lunf) : bool =
     if PSet.equal xhat yhat
     then
       begin
@@ -558,7 +558,7 @@ module Decide (T : THEORY) = struct
         Log.debug (fun m -> m "%s is locally unambiguous as %s" (show_nf nx) (show_nf xhat));
         let yhat = locally_unambiguous_form ny in
         Log.debug (fun m -> m "%s is locally unambiguous as %s" (show_nf ny) (show_nf yhat));
-        equivalent_lanf xhat yhat
+        equivalent_lunf xhat yhat
       end
     
   let equivalent (p: K.Term.t) (q: K.Term.t) : bool =
