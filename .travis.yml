@@ -20,11 +20,11 @@ before_install:
   - opam install -y batteries 
   - opam install -y ANSIterminal cmdliner fmt alcotest logs
   - opam install -y -v z3=4.8.1
-  - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
-  - export LD_LIBRARY_PATH
+#  - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
+#  - export LD_LIBRARY_PATH
 script:
   - opam exec -- dune build src/kmt
-  - opam exec -- dune exec -- src/kmt -vv --addition "x<2;inc(x,1)" "x<1;inc(x,1) + x<2;inc(x,1)"
+  - opam exec -- dune exec -- kmt -vv --addition "x<2;inc(x,1)" "x<1;inc(x,1) + x<2;inc(x,1)"
   - opam exec -- dune exec -- src/test_equivalence
   - opam exec -- dune exec -- src/test_word
 

@@ -1,47 +1,40 @@
-; install_name_tool fixups for macOS
 (rule
  (target kmt)
  (enabled_if (= %{ocaml-config:system} macosx))
- (deps main.exe)
  (action (progn
-           (copy main.exe %{target})
+           (copy %{exe:main.exe} %{target})
            (run install_name_tool -change libz3.dylib "%{lib:z3:libz3.dylib}" %{target}))))
 
 (rule
  (target kmt)
  (enabled_if (<> %{ocaml-config:system} macosx))
- (deps main.exe)
- (action (copy main.exe %{target})))
+ (action (copy %{exe:main.exe} %{target})))
 
 (rule
  (target test_equivalence)
  (enabled_if (= %{ocaml-config:system} macosx))
- (deps test_equivalence.exe)
  (action (progn
-           (copy test_equivalence.exe %{target})
+           (copy %{exe:test_equivalence.exe} %{target})
            (run install_name_tool -change libz3.dylib "%{lib:z3:libz3.dylib}" %{target}))))
 
 (rule
  (target test_equivalence)
  (enabled_if (<> %{ocaml-config:system} macosx))
- (deps test_equivalence.exe)
- (action (copy test_equivalence.exe %{target})))
+ (action (copy %{exe:test_equivalence.exe} %{target})))
 
 (rule
  (target test_word)
  (enabled_if (= %{ocaml-config:system} macosx))
- (deps test_word.exe)
  (action (progn
-           (copy test_word.exe %{target})
+           (copy %{exe:test_word.exe} %{target})
            (run install_name_tool -change libz3.dylib "%{lib:z3:libz3.dylib}" %{target}))))
 
 (rule
  (target test_word)
  (enabled_if (<> %{ocaml-config:system} macosx))
- (deps test_word.exe)
- (action (copy test_word.exe %{target})))
+ (action (copy  %{exe:test_word.exe} %{target})))
 
-; actual build rules
+ ; actual build rules
 
 (executable
  (name main)
