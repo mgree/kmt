@@ -25,7 +25,7 @@ before_install:
 script:
   - opam exec -- dune build src/kmt
   - opam exec -- dune exec -- src/kmt -vv --addition "x<2;inc(x,1)" "x<1;inc(x,1) + x<2;inc(x,1)"
-  - opam exec -- dune exec -- src/test_equivalence.exe
-  - opam exec -- dune exec -- src/test_word.exe
+  - opam exec -- dune exec -- src/test_equivalence
+  - opam exec -- dune exec -- src/test_word
 
 
