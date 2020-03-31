@@ -16,7 +16,7 @@ before_install:
   - opam install -y batteries 
   - opam install -y ANSIterminal cmdliner fmt alcotest logs
   - opam install -y -v z3=4.8.1
-  - LD_LIBRARY_PATH="$HOME/.opam/ocaml-base-compiler.4.07.1/lib/z3:$LD_LIBRARY_PATH"
+  - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
   - opam config exec -- dune build src/main.exe
