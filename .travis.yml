@@ -16,7 +16,7 @@ cache:
 
 before_install:
   - bash -ex .travis-ocaml.sh
-  - apt-get install tree
+  - sudo apt-get install tree
   - opam install -y ppx_deriving ocamlfind ocamlbuild
   - opam install -y batteries 
   - opam install -y ANSIterminal cmdliner fmt alcotest logs
