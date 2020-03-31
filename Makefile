@@ -1,26 +1,18 @@
-MLFILES=src/*.ml src/*.mli src/*.mll src/*.mly
-
-build: main.native
+build:
+	dune build -- src/kmt
 
 test: test_equivalence test_word
 
-test_equivalence : src/test_equivalence.ml
-	$(MAKE) test_equivalence.native
-	./test_equivalence.native
+test_equivalence: 
+	dune exec -- src/test_equivalence
 
-test_word : src/test_word.ml
-	$(MAKE) test_word.native
-	./test_word.native
+test_word:
+	dune exec -- src/test_word
 
-eval: src/eval.ml
-	$(MAKE) eval.native
-	./eval.native
-
-%.native: $(MLFILES)
-	ocamlbuild -use-ocamlfind -r src/$@
+eval:
+	dune exec -- src/eval
 
 clean:
-	ocamlbuild -clean
-	rm -f bin/*.native
+	dune clean
 
-.PHONY: build run test test_equivalence test_word clean
+.PHONY: build run test test_equivalence test_word eval clean

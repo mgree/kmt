@@ -23,9 +23,9 @@ before_install:
   - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
-  - opam exec -- dune build src/kmt
+  - opam exec -- make build
   - opam exec -- dune exec -- src/kmt -vv --addition "x<2;inc(x,1)" "x<1;inc(x,1) + x<2;inc(x,1)"
-  - opam exec -- dune exec -- src/test_equivalence
-  - opam exec -- dune exec -- src/test_word
+  - opam exec -- make test
+  - opam exec -- make eval
 
 

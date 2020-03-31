@@ -11,6 +11,18 @@
  (action (copy %{exe:main.exe} %{target})))
 
 (rule
+ (target eval)
+ (enabled_if (= %{ocaml-config:system} macosx))
+ (action (progn
+           (copy %{exe:eval.exe} %{target})
+           (run install_name_tool -change libz3.dylib "%{lib:z3:libz3.dylib}" %{target}))))
+
+(rule
+ (target eval)
+ (enabled_if (<> %{ocaml-config:system} macosx))
+ (action (copy %{exe:eval.exe} %{target})))
+
+(rule
  (target test_equivalence)
  (enabled_if (= %{ocaml-config:system} macosx))
  (action (progn
@@ -43,6 +55,13 @@
  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
  (flags -thread (-cclib -lstdc++)))
 
+(executable
+ (name eval)
+ (modules eval)
+ (libraries z3 kmt ANSITerminal)
+ (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
+ (flags -thread (-cclib -lstdc++)))
+
 (test
  (name test_equivalence)
  (modules test_equivalence)
@@ -60,7 +79,7 @@
 (library
  (name kmt)
  (wrapped false)
- (modules :standard \ main test_equivalence test_word)
+ (modules :standard \ main test_equivalence test_word eval)
  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
  (libraries batteries str unix ANSITerminal fmt fmt.cli fmt.tty
             alcotest logs logs.fmt logs.cli z3))
