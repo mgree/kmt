@@ -22,6 +22,7 @@ before_install:
   - opam install -y -v z3=4.8.1
   - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
+  - if [ "$TRAVIS_OS_NAME" = "osx" ]; then DYLD_LIBRARY_PATH="$(opam var lib)/z3:$DYLD_LIBRARY_PATH"; export LD_LIBRARY_PATH; fi
 script:
   - ls -lR $(opam var lib)/z3
   - ls -lR $(opam var lib)/stublibs
