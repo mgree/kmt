@@ -419,7 +419,7 @@ module Decide (T : THEORY) = struct
       (fun (i1,pi1) (i2,pi2) ->
         if i1 = i2
         then K.P.compare pi1 pi2
-        else Pervasives.compare i1 i2)
+        else Stdlib.Pervasives.compare i1 i2)
                 
   let alphabet_of (m: ra) : alphabet =
     let rec loop (m: ra) (sigma: alphabet) : alphabet =

@@ -439,7 +439,7 @@ module KAT (T : THEORY) : KAT_IMPL with module A = T.A and module P = T.P = stru
 
   let implies (a: Test.t) (b: Test.t) : bool =
     let x = pseq a (not b) in
-    Pervasives.not (satisfiable x)
+    Stdlib.Pervasives.not (satisfiable x)
 
 
   let rec subterms (x: Test.t) : Test.t PSet.t =
