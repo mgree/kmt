@@ -6,6 +6,10 @@ env:
   - OCAML_VERSION=4.09
   - OCAML_VERSION=4.10
 
+os:
+  - linux
+  - osx
+  
 cache:
   directories:
     - $HOME/.opam
