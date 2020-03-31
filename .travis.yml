@@ -23,6 +23,7 @@ before_install:
   - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
+  - tree $(opam var lib)
   - opam config exec -- dune build src/main.exe
   - opam config exec -- dune exec src/test_equivalence.exe
   - opam config exec -- dune exec src/test_word.exe
