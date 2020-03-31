@@ -10,14 +10,6 @@ os:
   - linux
   - osx
 
-addons:
-  homebrew:
-    packages:
-      - tree
-  apt:
-    packages:
-      - tree
-  
 cache:
   directories:
     - $HOME/.opam
@@ -31,7 +23,8 @@ before_install:
   - LD_LIBRARY_PATH="$(opam var lib)/z3:$LD_LIBRARY_PATH"
   - export LD_LIBRARY_PATH
 script:
-  - tree $(opam var lib)
+  - ls -lR $(opam var lib)/z3
+  - ls -lR $(opam var lib)/stublibs
   - opam config exec -- dune build src/main.exe
   - opam config exec -- dune exec src/test_equivalence.exe
   - opam config exec -- dune exec src/test_word.exe
