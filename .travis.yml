@@ -16,7 +16,7 @@ addons:
       - tree
   apt:
     packages:
-      -tree
+      - tree
   
 cache:
   directories:
