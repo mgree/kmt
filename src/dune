@@ -1,14 +1,14 @@
 (executable
  (name main)
  (modules main)
- (libraries kmt fmt fmt.cli fmt.tty logs logs.fmt logs.cli cmdliner)
+ (libraries z3 kmt fmt fmt.cli fmt.tty logs logs.fmt logs.cli cmdliner)
  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
  (flags -thread (-cclib -lstdc++)))
 
 (test
  (name test_equivalence)
  (modules test_equivalence)
- (libraries kmt alcotest)
+ (libraries z3 kmt alcotest)
  (preprocess (pps ppx_deriving.show ppx_deriving.eq ppx_deriving.ord))             
  (flags -thread (-cclib -lstdc++)))
 
