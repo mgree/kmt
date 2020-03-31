@@ -10,7 +10,7 @@
  (target kmt)
  (enabled_if (<> %{ocaml-config:system} macosx))
  (deps main.exe)
- (action (copy main %{target})))
+ (action (copy main.exe %{target})))
 
 (executable
  (name main)
