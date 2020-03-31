@@ -55,9 +55,9 @@ struct
 
       let hash = hash_ltlf
 
-      let compare = Stdlib.Pervasives.compare
+      let compare = Stdlib.compare
 
-      let equal x y = Stdlib.Pervasives.compare x y = 0
+      let equal x y = Stdlib.compare x y = 0
 
       let show x =
         match x with

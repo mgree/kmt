@@ -136,7 +136,7 @@ module LTL = struct
   (*End paritioning helper functions*)
 
   (*Compare to allow sets*)
-  let compare = Stdlib.Pervasives.compare;; 
+  let compare = Stdlib.compare;; 
 
   (* Convert temporal formulae to nontemporal *)
   let rec dropTemporal phi =
@@ -187,7 +187,7 @@ module PNP = struct
     
 
     
-  let compare = Stdlib.Pervasives.compare;;
+  let compare = Stdlib.compare;;
     
   let terminal q = { typ=Term;
                      pos=BatSet.map LTL.dropTemporal q.pos;
