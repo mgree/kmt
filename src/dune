@@ -1,3 +1,17 @@
+(rule
+ (target kmt)
+ (enabled_if (= %{ocaml-config:system} macosx))
+ (deps main.exe)
+ (action (progn
+           (copy main.exe %{target})
+           (run install_name_tool -change libz3.dylib "%{lib:z3:libz3.dylib}" %{target}))))
+
+(rule
+ (target kmt)
+ (enabled_if (<> %{ocaml-config:system} macosx))
+ (deps main.exe)
+ (action (copy main %{target})))
+
 (executable
  (name main)
  (modules main)
