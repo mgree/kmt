@@ -1,6 +1,8 @@
 - Logging
   + Tagging of topics (e.g., sat, other stuff...)
 
+- Change normalization routine to use minterms
+
 - SMT module
 - Commonality in `satisfiable`?
 
